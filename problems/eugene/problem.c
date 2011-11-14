@@ -36,7 +36,7 @@ void problem_init(int argc, char* argv[]){
 
 
 	double surfacedensity 		= 400; 		// kg/m^2
-	moonlet_radius 			= 50;		// m
+	moonlet_radius 			= 25;		// m
 	double particle_density		= 400;		// kg/m^3
 	double particle_radius_min 	= 2.9;		// m
 	double particle_radius_max 	= 3.1;		// m
