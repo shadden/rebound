@@ -31,9 +31,10 @@
 #include "particle.h"
 #include "main.h"
 #include "boundaries.h"
+#include "communication_mpi.h"
 
 #ifdef MPI
-#error GRAVITY_DIRECT_DIRECT not compatible with MPI yet
+#warning GRAVITY_DIRECT_DIRECT may not be compatible with MPI yet
 #endif
 
 void gravity_calculate_acceleration(){
@@ -82,4 +83,30 @@ void gravity_calculate_acceleration(){
 	}
 	}
 	}
+#ifdef MPI
+	// Distribute active particles from root to all other nodes.
+	// This assures that round-off errors do not accumulate and 
+	// the copies of active particles diverge. 
+	for(int i=0;i<N_active;i++){
+		struct particle p = particles[i];
+		// Sum acceleration
+		double a_send[3];
+		a_send[0] = p.ax; a_send[1] = p.ay; a_send[2] = p.az; 
+		double a_recv[3] = {0,0,0};
+		MPI_Reduce(a_send,a_recv,3,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+		particles[i].ax = a_recv[0];
+		particles[i].ay = a_recv[1];
+		particles[i].az = a_recv[2];
+		
+		// Average velocity (due to collisions)
+		double v_send[3];
+		v_send[0] = p.vx; v_send[1] = p.vy; v_send[2] = p.vz; 
+		double v_recv[3] = {0,0,0};
+		MPI_Reduce(v_send,v_recv,3,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+		particles[i].vx = v_recv[0]/(double)mpi_num;
+		particles[i].vy = v_recv[1]/(double)mpi_num;
+		particles[i].vz = v_recv[2]/(double)mpi_num;
+	}
+	MPI_Bcast(particles, N_active, mpi_particle, 0, MPI_COMM_WORLD); 
+#endif
 }

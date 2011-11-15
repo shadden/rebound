@@ -54,22 +54,17 @@ void problem_init(int argc, char* argv[]){
 	// Setup particle structures
 	init_box();
 	// Initial conditions
-#ifdef MPI
-	if (mpi_id==0){
-#endif
-		// Moonlet
-		struct particle moonlet;
-		moonlet.x 	= 0; moonlet.y 		= 0; moonlet.z 		= 0;
-		moonlet.vx 	= 0; moonlet.vy 	= 0; moonlet.vz 	= 0;
-		moonlet.ax 	= 0; moonlet.ay		= 0; moonlet.az		= 0;
-		moonlet.r 	= moonlet_radius;		// m
-		double	particle_mass = particle_density*4./3.*M_PI*moonlet_radius*moonlet_radius*moonlet_radius;
-		moonlet.m 	= particle_mass; 	// kg
-		particles_add(moonlet);
-#ifdef MPI
-	}
-#endif
+	// Moonlet
+	struct particle moonlet;
+	moonlet.x 	= 0; moonlet.y 		= 0; moonlet.z 		= 0;
+	moonlet.vx 	= 0; moonlet.vy 	= 0; moonlet.vz 	= 0;
+	moonlet.ax 	= 0; moonlet.ay		= 0; moonlet.az		= 0;
+	moonlet.r 	= moonlet_radius;		// m
+	double	particle_mass = particle_density*4./3.*M_PI*moonlet_radius*moonlet_radius*moonlet_radius;
+	moonlet.m 	= particle_mass; 	// kg
+	particles_add(moonlet);
 	double total_mass = surfacedensity*boxsize*boxsize;
+
 	for(int i=0;i<root_n;i++){
 #ifdef MPI
 		if (communication_mpi_rootbox_is_local(i)==0) continue;
@@ -125,13 +120,11 @@ void problem_inloop(){
 }
 
 void problem_output(){
-	if (output_check(1e-3*2.*M_PI/OMEGA)){
-		output_timing();
-	}
 	if (output_check(dt)){
-		output_moonlet("moonlet.txt");
+		//output_moonlet("moonlet.txt");
 	}
 	if (output_check(10.*dt)){
+		output_timing();
 		output_ascii("position.txt");
 	}
 }
