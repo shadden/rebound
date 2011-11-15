@@ -23,7 +23,7 @@ double moonlet_radius;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	root_nx = 1; root_ny = 8; root_nz = 1;
+	root_nx = 4; root_ny = 32; root_nz = 1;
 	nghostx = 2; nghosty = 3; nghostz = 0; 		// Ghost boxes, the more, the better, the slower.
 	N_active	= 1;				// Only moonlet has gravity
 	N_tree_fixed	= 1;				// Moonlet keeps the index 0
@@ -33,6 +33,7 @@ void problem_init(int argc, char* argv[]){
 	G 		= 6.67428e-11;			// N m^2 / kg^2
 	softening 	= 1;				// m (not really needed)
 	dt 		= 1e-3*2.*M_PI/OMEGA;		// s (s small fraction of the orbital time)
+	tmax		= 1e2 *2.*M_PI/OMEGA;		// Stop simulation after 100 orbits
 
 
 	double surfacedensity 		= 400; 		// kg / m^2
@@ -45,7 +46,7 @@ void problem_init(int argc, char* argv[]){
 	}else{
 		moonlet_radius 		= 25;		// otherwise use default
 	}
-	boxsize = 0.05*pow(moonlet_radius,3);		// boxsize scales as the third power of the moonlet
+	boxsize = 0.25*0.05*pow(moonlet_radius,3);		// boxsize scales as the third power of the moonlet
 	
 	// Use Bridges et al. coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
