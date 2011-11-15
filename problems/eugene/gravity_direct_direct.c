@@ -34,7 +34,8 @@
 #include "communication_mpi.h"
 
 #ifdef MPI
-#warning GRAVITY_DIRECT_DIRECT may not be compatible with MPI yet
+#warning GRAVITY_DIRECT_DIRECT may not work as expected for your problem.
+#warning Make sure you understand what the code is doing.
 #endif
 
 void gravity_calculate_acceleration(){
