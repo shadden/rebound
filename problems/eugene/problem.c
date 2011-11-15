@@ -131,6 +131,9 @@ void problem_output(){
 	if (output_check(dt)){
 		output_moonlet("moonlet.txt");
 	}
+	if (output_check(10.*dt)){
+		output_ascii("position.txt");
+	}
 }
 
 void problem_finish(){
