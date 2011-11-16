@@ -23,7 +23,8 @@ double moonlet_radius;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	root_nx = 4; root_ny = 32; root_nz = 1;
+	int oversample = 1;
+	root_nx = oversample; root_ny = 4*oversample; root_nz = 1;
 	nghostx = 2; nghosty = 3; nghostz = 0; 		// Ghost boxes, the more, the better, the slower.
 	N_active	= 1;				// Only moonlet has gravity
 	N_tree_fixed	= 1;				// Moonlet keeps the index 0
@@ -46,7 +47,7 @@ void problem_init(int argc, char* argv[]){
 	}else{
 		moonlet_radius 		= 25;		// otherwise use default
 	}
-	boxsize = 0.25*0.05*pow(moonlet_radius,3);		// boxsize scales as the third power of the moonlet
+	boxsize = 1./(double)oversample*pow(moonlet_radius,2);		// boxsize scales as the third power of the moonlet
 	
 	// Use Bridges et al. coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
