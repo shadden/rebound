@@ -1,0 +1,11 @@
+#!/bin/bash
+#$ -N m100
+#$ -pe orte 4
+#$ -cwd
+#$ -V
+#$ -l h_rt=240:00:00
+
+MPI=/usr/local/openmpi/gcc/x86_64
+PATH=${MPI}/bin:${PATH}
+LD_LIBRARY_PATH=${MPI}/lib
+mpirun ../nbody 100

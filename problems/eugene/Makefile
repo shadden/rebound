@@ -1,10 +1,10 @@
 PROBLEMDIR=problems/$(shell basename `pwd`)
-export OPENGL=1
+export OPENGL=0
 export OPT=-O3
 export QUADRUPOLE=0
 export OPENMP=0
-#export MPI=1
-#export CC=mpicc
+export MPI=1
+export CC=mpicc
 
 all:
 	# Setup link to different modules
