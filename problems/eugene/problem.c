@@ -23,7 +23,7 @@ double moonlet_radius;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	int oversample = 1;
+	int oversample = 4;
 	root_nx = oversample; root_ny = 4*oversample; root_nz = 1;
 	nghostx = 2; nghosty = 3; nghostz = 0; 		// Ghost boxes, the more, the better, the slower.
 	N_active	= 1;				// Only moonlet has gravity
@@ -104,12 +104,15 @@ double coefficient_of_restitution_bridges(double v){
 	return eps;
 }
 
+double shift_x = 0;
+double shift_y = 0;
+
 void output_moonlet(char* filename){
 	struct particle moon = particles[0]; // Moonlet
 	FILE* f = fopen(filename, "a");
 	fprintf(f,"%e\t",t);					// Time
-	fprintf(f,"%e\t%e\t%e\t",moon.x, moon.y, moon.z );	// Position
-	fprintf(f,"%e\t%e\t%e\t",moon.vx,moon.vy,moon.vz);	// Velocity
+	fprintf(f,"%e\t%e\t%e\t",moon.x+shift_x, moon.y+shift_y, moon.z );	// Position
+	fprintf(f,"%e\t%e\t%e\t",moon.vx,moon.vy-1.5*OMEGA*shift_x,moon.vz);	// Velocity
 	fprintf(f,"%e\t%e\t%e\t",moon.ax,moon.ay,moon.az);	// Acceleration
 	fprintf(f,"\n");
 	fclose(f);
@@ -120,6 +123,19 @@ void problem_inloop(){
 
 int output_num_moonlet = 0;
 void problem_output(){
+	// Recenter moonlet
+	struct particle moonlet = particles[0];
+	double aO = 2.*moonlet.vy/OMEGA + 4.*moonlet.x;	// Center of epicyclic motion
+	double bO = moonlet.y - 2.*moonlet.vx/OMEGA;
+	shift_x += aO;
+	shift_y += bO;
+	for (int i=0;i<N;i++){
+		particles[i].x  -= aO;
+		particles[i].y  -= bO;
+		particles[i].vy += 1.5*OMEGA*aO;
+	}
+
+	// Output stuff
 	if (output_check(1e-2*2.*M_PI/OMEGA)){
 #ifdef MPI
 		if (mpi_id==0){

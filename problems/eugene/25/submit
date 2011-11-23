@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -N m25
-#$ -pe orte 4
+#$ -pe orte 16
 #$ -cwd
 #$ -V
 #$ -R y

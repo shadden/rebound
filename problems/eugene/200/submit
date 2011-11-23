@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -N m200
-#$ -pe orte 16
+#$ -pe orte 64
 #$ -cwd
 #$ -V
 #$ -R y

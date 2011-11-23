@@ -21,3 +21,13 @@ all:
 
 doc: all
 	$(MAKE) -C ../../src/ doc
+
+clean:
+	rm -v 25/m*
+	rm -v 50/m*
+	rm -v 100/m*
+	rm -v 200/m*
+	rm -v 25/posi*
+	rm -v 50/posi*
+	rm -v 100/posi*
+	rm -v 200/posi*
