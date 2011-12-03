@@ -47,7 +47,7 @@ void problem_init(int argc, char* argv[]){
 	}else{
 		moonlet_radius 		= 25;		// otherwise use default
 	}
-	boxsize = 1./(double)oversample*pow(moonlet_radius,2);		// boxsize scales as the third power of the moonlet
+	boxsize = 100./(double)oversample*pow(moonlet_radius,1);		// boxsize scales as the third power of the moonlet
 	
 	// Use Bridges et al. coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
