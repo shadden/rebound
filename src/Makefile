@@ -45,6 +45,10 @@ ifeq ($(QUADRUPOLE), 1)
 	PREDEF+= -DQUADRUPOLE
 endif
 
+ifeq ($(FIVESTEPINTEGRATOR), 1)
+	PREDEF+= -DFIVESTEPINTEGRATOR
+endif
+
 ifeq ($(OPENMP), 1)
 	PREDEF+= -DOPENMP
 ifeq ($(CC), icc)

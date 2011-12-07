@@ -24,6 +24,16 @@
  */
 #ifndef _INTEGRATOR_EULER_H
 #define _INTEGRATOR_EULER_H
+
+#ifdef INTEGRATOR_FIVESTEP
+void integrator_part1();
+void integrator_part2();
+void integrator_part3();
+void integrator_part4();
+void integrator_part5();
+#else	// INTEGRATOR_FIVESTEP
+
+
 /*
  * The first half of the integrator step.
  * This function is called at the beginning of the timestep. It 
@@ -39,4 +49,5 @@ void integrator_part1();
  * sync which is needed for collision detection.
  */
 void integrator_part2();
+#endif	// INTEGRATOR_FIVESTEP
 #endif

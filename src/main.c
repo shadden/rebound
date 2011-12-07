@@ -94,6 +94,7 @@ void init_box(){
 
 
 void iterate(){	
+#ifndef INTEGRATOR_FIVESTEP
 	// A 'DKD'-like integrator will do the first 'D' part.
 	integrator_part1();
 
@@ -162,6 +163,26 @@ void iterate(){
 	// Resolve collisions (only local particles are affected).
 	collisions_resolve();
 #endif  // COLLISIONS_NONE
+
+#else  //ifndef INTEGRATOR_FIVESTEP
+	// A 'DKDKD'-like integrator
+	integrator_part1();
+	gravity_calculate_acceleration();
+	integrator_part2();
+	integrator_part3();
+	gravity_calculate_acceleration();
+	integrator_part4();
+	integrator_part5();
+
+
+
+#endif //ifndef INTEGRATOR_FIVESTEP
+
+
+
+
+
+
 
 #ifdef OPENGL
 	display();

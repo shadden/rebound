@@ -38,56 +38,54 @@
 
 double energy();
 double energy_init;
+double energy_error_sum = 0;
+int    energy_error_N = 0;
 
 void problem_init(int argc, char* argv[]){
-	boxsize = 100;
-	softening = 0;//boxsize/100.;
-	dt = 0.01;
+	boxsize   = 1;
+	softening = 0.;
 	init_box();
-	double velocity = 10;
-	tmax = boxsize_x/4./velocity;
+	double velocity = 30;
+	tmax = 0.03;
 
+	if (argc>1){ 	
+		dt	= atof(argv[1]);
+	}else{
+		dt      = 1e-6;
+	}
 
-	while(N<200){
+	while(N<100){
 		struct particle pt;
-		pt.x 	= tools_uniform(-boxsize_x/16.,boxsize_x/16.);
+		pt.x 	= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
 		pt.y 	= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
-		if (fabs(pt.y)<boxsize_y/16.) continue;
-		pt.z 	= 0;
+		pt.z 	= tools_uniform(-boxsize_z/2.,boxsize_z/2.);
+		if (fabs(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z)>boxsize_y*boxsize_y/128.) continue;
 		pt.vx 	= 0; 	pt.vy 	= 0; 	pt.vz 	= 0;
 		pt.ax	= 0; 	pt.ay 	= 0; 	pt.az 	= 0;
 		pt.m 	= 1;
 		particles_add(pt);
 	}
-	N_active = N;
 	
-	while(N<300){
-		struct particle pt;
-		pt.x 	= -boxsize_x/8.;
-		pt.y 	= tools_uniform(-boxsize_y/32.,boxsize_y/32.);
-		pt.z 	= 0;
-		pt.vx 	= velocity; 	pt.vy 	= 0; 	pt.vz 	= 0;
-		pt.ax	= 0; 	pt.ay 	= 0; 	pt.az 	= 0;
-		pt.m 	= 0;
-		particles_add(pt);
-	}
-
 	energy_init = energy();
 }
 
 double energy(){
 	double e = 0;
-	for (int i=N_active; i<N; i++){
-		for (int j=0; j<N_active; j++){
+	for (int i=0; i<N; i++){
+		for (int j=0; j<N; j++){
 			if (i==j) continue;
 			double dx = particles[i].x - particles[j].x;
 			double dy = particles[i].y - particles[j].y;
 			double dz = particles[i].z - particles[j].z;
-			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-			e += -G/r*particles[j].m;
+			double r = sqrt(dx*dx + dy*dy + dz*dz);
+			e += -1./(r)*particles[j].m;
 		}
+		double vx = particles[i].vx;
+		double vy = particles[i].vy;
+		double vz = particles[i].vz;
+		e += 0.5*(vx*vx + vy*vy + vz*vz);
 	}
-	return e;
+	return e/(double)(N-N_active);
 }
 
 
@@ -98,9 +96,17 @@ void problem_inloop(){
 
 void problem_output(){
 	output_timing();
+	double e = energy();
+	energy_error_sum += fabs((e-energy_init)/energy_init);
+	energy_error_N++;
 }
 
 void problem_finish(){
-	double energy_finish = energy();
-	printf("\nrelative energy error = %e\n", (energy_finish-energy_init)/(energy_finish+energy_init)*2.);
+#ifdef INTEGRATOR_FIVESTEP
+	FILE* f = fopen("error_fivestep.txt","a+");
+#else  // FIVESTEPINTEGRATOR
+	FILE* f = fopen("error_leapfrog.txt","a+");
+#endif // FIVESTEPINTEGRATOR
+	fprintf(f,"%e\t%e\n", dt,energy_error_sum/(double)energy_error_N);
+	fclose(f);
 }
