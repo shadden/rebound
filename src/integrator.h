@@ -25,29 +25,18 @@
 #ifndef _INTEGRATOR_EULER_H
 #define _INTEGRATOR_EULER_H
 
-#ifdef INTEGRATOR_FIVESTEP
-void integrator_part1();
-void integrator_part2();
-void integrator_part3();
-void integrator_part4();
-void integrator_part5();
-#else	// INTEGRATOR_FIVESTEP
+enum integrator_substep_type{
+	IST_KICK,
+	IST_DRIFT
+};
 
+extern const int integrator_substep_N;
+extern const enum integrator_substep_type integrator_substeps[];
 
 /*
- * The first half of the integrator step.
- * This function is called at the beginning of the timestep. It 
- * advances the positions by 1/2 timestep.
+ * Integrate the system during substep part.
+ * @param part: Integrator substep.
  */
-void integrator_part1();
-/*
- * The second half of the integrator step.
- * This function is called after gravitational (and non-gravitational) 
- * forces for each particle have been calculated. It advances the 
- * velocity by 1 timestep and the positions by 1/2 timestep.
- * At the end of this function, the positions and velocities are in
- * sync which is needed for collision detection.
- */
-void integrator_part2();
-#endif	// INTEGRATOR_FIVESTEP
+void integrator_part(int part);
+
 #endif

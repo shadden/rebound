@@ -94,89 +94,60 @@ void init_box(){
 
 
 void iterate(){	
-#ifndef INTEGRATOR_FIVESTEP
-	// A 'DKD'-like integrator will do the first 'D' part.
-	integrator_part1();
 
-	// Check for root crossings.
-	boundaries_check();     
-
-	// Update and simplify tree. 
-	// Prepare particles for distribution to other nodes. 
-	// This function also creates the tree if called for the first time.
-#ifdef TREE
-	tree_update();          
-#endif //TREE
-
-#ifdef MPI
-	// Distribute particles and add newly received particles to tree.
-	communication_mpi_distribute_particles();
-#endif // MPI
-
+	for(int i=0;i<integrator_substep_N;i++){
+		if (integrator_substeps[i]==IST_KICK){
 #ifdef GRAVITY_TREE
-	// Update center of mass and quadrupole moments in tree in preparation of force calculation.
-	tree_update_gravity_data(); 
-	
+			// Update center of mass and quadrupole moments in tree in preparation of force calculation.
+			tree_update_gravity_data(); 
 #ifdef MPI
-	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree_for_gravity();
-
-	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree_for_gravity();
+			// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+			tree_prepare_essential_tree_for_gravity();
+			// Transfer essential tree and particles needed for collisions.
+			communication_mpi_distribute_essential_tree_for_gravity();
 #endif // MPI
 #endif // GRAVITY_TREE
+			// Calculate accelerations. 
+			gravity_calculate_acceleration();
+		}
+		
+		// TODO This function call doesn't make much sense in this configuration.
+		// Call problem specific function (e.g. to add additional forces). 
+		problem_inloop();
 
-	// Calculate accelerations. 
-	gravity_calculate_acceleration();
+		// Call the integrator substep.
+		integrator_part(i);
 
-	// Call problem specific function (e.g. to add additional forces). 
-	problem_inloop();
-
-	// A 'DKD'-like integrator will do the 'KD' part.
-	integrator_part2();
-
-	// Do collisions here. We need both the positions and velocities at the same time.
-#ifndef COLLISIONS_NONE
-	// Check for root crossings.
-	boundaries_check();     
-
-#ifdef COLLISIONS_TREE
-	// Update and simplify tree. 
-	// Prepare particles for distribution to other nodes. 
-	tree_update();          
-
+		if (integrator_substeps[i]==IST_DRIFT){
+			// Check for root crossings.
+			boundaries_check();     
+#ifdef TREE
+			// Update and simplify tree. 
+			// Prepare particles for distribution to other nodes. 
+			// This function also creates the tree if called for the first time.
+			tree_update();          
+#endif //TREE
 #ifdef MPI
-	// Distribute particles and add newly received particles to tree.
-	communication_mpi_distribute_particles();
-	
-	// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-	tree_prepare_essential_tree_for_collisions();
-
-	// Transfer essential tree and particles needed for collisions.
-	communication_mpi_distribute_essential_tree_for_collisions();
+			// Distribute particles and add newly received particles to tree.
+			communication_mpi_distribute_particles();
+#endif // MPI
+#ifndef COLLISIONS_NONE
+#ifdef COLLISIONS_TREE
+#ifdef MPI
+			// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+			tree_prepare_essential_tree_for_collisions();
+			// Transfer essential tree and particles needed for collisions.
+			communication_mpi_distribute_essential_tree_for_collisions();
 #endif // MPI
 #endif // COLLISIONS_TREE
-
-	// Search for collisions using local and essential tree.
-	collisions_search();
-
-	// Resolve collisions (only local particles are affected).
-	collisions_resolve();
+			// Search for collisions using local and essential tree.
+			collisions_search();
+			// Resolve collisions (only local particles are affected).
+			collisions_resolve();
 #endif  // COLLISIONS_NONE
+		}
+	}
 
-#else  //ifndef INTEGRATOR_FIVESTEP
-	// A 'DKDKD'-like integrator
-	integrator_part1();
-	gravity_calculate_acceleration();
-	integrator_part2();
-	integrator_part3();
-	gravity_calculate_acceleration();
-	integrator_part4();
-	integrator_part5();
-
-
-
-#endif //ifndef INTEGRATOR_FIVESTEP
 
 
 

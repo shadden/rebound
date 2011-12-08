@@ -36,24 +36,42 @@
 #include "main.h"
 #include "gravity.h"
 
-/**
- * This part has no function, as the euler scheme does not have any sub-
- * timestep.
- */
-void integrator_part1(){
+const int integrator_substep_N   = 2;
+const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK};
+
+void integrator_part0();
+void integrator_part1();
+
+void integrator_part(int part){
+	switch (part){
+		case 0:
+			integrator_part0();
+			break;
+		case 1:
+			integrator_part1();
+			break;
+	}
 }
 
-void integrator_part2(){
+// Drift
+void integrator_part1(){
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		particles[i].x  += dt * particles[i].vx;
 		particles[i].y  += dt * particles[i].vy;
 		particles[i].z  += dt * particles[i].vz;
+	}
+	t+=dt;
+}
+
+// Kick
+void integrator_part2(){
+#pragma omp parallel for schedule(guided)
+	for (int i=0;i<N;i++){
 		particles[i].vx += dt * particles[i].ax;
 		particles[i].vy += dt * particles[i].ay;
 		particles[i].vz += dt * particles[i].az;
 	}
-	t+=dt;
 }
 	
 

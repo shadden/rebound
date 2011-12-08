@@ -8,10 +8,11 @@ export OPENGL=1
 
 all:
 	# Setup link to different modules
-	ln -fs gravity_direct.c ../../src/gravity.c
+	ln -fs ../$(PROBLEMDIR)/gravity_direct_testparticle.c ../../src/gravity.c
+	#ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_none.c ../../src/boundaries.c
-	#ln -fs ../$(PROBLEMDIR)/integrator_fivestep.c ../../src/integrator.c
-	ln -fs integrator_leapfrog.c ../../src/integrator.c
+	ln -fs ../$(PROBLEMDIR)/integrator_fivestep.c ../../src/integrator.c
+	#ln -fs integrator_leapfrog.c ../../src/integrator.c
 	ln -fs collisions_none.c ../../src/collisions.c
 	# Setup link to problem file
 	ln -fs ../$(PROBLEMDIR)/problem.c ../../src/problem.c

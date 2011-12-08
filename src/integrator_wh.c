@@ -42,6 +42,7 @@
 #include "particle.h"
 #include "main.h"
 #include "gravity.h"
+#include "integrator.h"
 #include "boundaries.h"
 
 void drift_wh(double _dt);
@@ -59,8 +60,27 @@ void integrator_wh_ah();
 void integrator_wh_to_jacobi();
 void integrator_wh_from_jacobi();
 
+
+const int integrator_substep_N   = 3;
+const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK, IST_DRIFT};
+
+void integrator_part0();
+void integrator_part1();
+
+void integrator_part(int part){
+	switch (part){
+		case 0:
+		case 2:
+			integrator_part0();
+			break;
+		case 1:
+			integrator_part1();
+			break;
+	}
+}
+
 int _N_active;
-void integrator_part1(){
+void integrator_part0(){
 	// DRIFT
 	_N_active = (N_active==-1)?N:N_active;
 	integrator_wh_to_jacobi();
@@ -69,7 +89,7 @@ void integrator_part1(){
 	t+=dt/2.;
 }
 
-void integrator_part2(){
+void integrator_part1(){
 	// KICK
 	_N_active = (N_active==-1)?N:N_active;
 	// Calculate terms in Heliocentric coordinates
@@ -83,11 +103,6 @@ void integrator_part2(){
 		particles[i].vy += dt*particles[i].ay;
 		particles[i].vz += dt*particles[i].az;
 	}
-	// DRIFT
-	integrator_wh_to_jacobi();
-	drift_wh(dt/2.);
-	integrator_wh_from_jacobi();
-	t+=dt/2.;
 }
 
 int wh_check_normal(struct particle* p){

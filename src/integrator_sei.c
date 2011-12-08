@@ -37,10 +37,30 @@
 #include "particle.h"
 #include "gravity.h"
 #include "main.h"
+#include "integrator.h"
 #include "boundaries.h"
 
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
 double OMEGAZ 	= -1.; 	/**< Epicyclic frequency in vertical direction. */
+
+const int integrator_substep_N   = 3;
+const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK, IST_DRIFT};
+
+void integrator_part0();
+void integrator_part1();
+
+void integrator_part(int part){
+	switch (part){
+		case 0:
+		case 2:
+			integrator_part0();
+			break;
+		case 1:
+			integrator_part1();
+			break;
+	}
+}
+
 
 void operator_H012(struct particle* p);
 void operator_phi1(struct particle* p);
@@ -66,7 +86,7 @@ void integrator_cache_coefficients(){
 	}
 }
 
-void integrator_part1(){
+void integrator_part0(){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -75,14 +95,12 @@ void integrator_part1(){
 	t+=dt/2.;
 }
 
-void integrator_part2(){
+void integrator_part1(){
 	integrator_cache_coefficients();
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(&(particles[i]));
-		operator_H012(&(particles[i]));
 	}
-	t+=dt/2.;
 }
 
 /**

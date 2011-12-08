@@ -1,11 +1,13 @@
 /**
  * @file 	integrator.c
- * @brief 	Leap-frog integration scheme.
+ * @brief 	McLachlan ABABA integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependend forces are present.
+ * @detail	This file implements a leap-frog style method of order
+ * two. The first error term is O(epsilon^2 t^3), where epsilon is the
+ * small parameter that measures how important gravity is.
+ * Note that in a standard leapfrog algorithm, the error term is
+ * O(epsilon t^3). 
+ * For more details see McLauchlan (2003). 
  * 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
@@ -36,10 +38,33 @@
 #include "main.h"
 #include "gravity.h"
 #include "boundaries.h"
+#include "integrator.h"
 
-// Leapfrog integrator (Drift-Kick-Drift)
-// for non-rotating frame.
-void integrator_part1(){
+
+const int integrator_substep_N   = 5;
+const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK, IST_DRIFT, IST_KICK, IST_DRIFT};
+
+void integrator_part0();
+void integrator_part1();
+void integrator_part2();
+
+void integrator_part(int part){
+	switch (part){
+		case 0:
+		case 4:
+			integrator_part0();
+			break;
+		case 1:
+		case 3:
+			integrator_part1();
+			break;
+		case 2:
+			integrator_part2();
+			break;
+	}
+}
+
+void integrator_part0(){
 	const double c = (3.-sqrt(3.))/6.;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -49,7 +74,7 @@ void integrator_part1(){
 	}
 }
 
-void integrator_part2(){
+void integrator_part1(){
 	const double c = 0.5;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -60,7 +85,7 @@ void integrator_part2(){
 	t+=dt/2.;
 }
 	
-void integrator_part3(){
+void integrator_part2(){
 	const double c = 1./sqrt(3.);
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
@@ -70,23 +95,3 @@ void integrator_part3(){
 	}
 }
 
-void integrator_part4(){
-	const double c = 0.5;
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].vx += c* dt * particles[i].ax;
-		particles[i].vy += c* dt * particles[i].ay;
-		particles[i].vz += c* dt * particles[i].az;
-	}
-	t+=dt/2.;
-}
-
-void integrator_part5(){
-	const double c = (3.-sqrt(3.))/6.;
-#pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		particles[i].x  += c* dt * particles[i].vx;
-		particles[i].y  += c* dt * particles[i].vy;
-		particles[i].z  += c* dt * particles[i].vz;
-	}
-}
