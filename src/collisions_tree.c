@@ -71,7 +71,7 @@ double 	collisions_max2_r	= 0;
  */
 void tree_get_nearest_neighbour_in_cell(struct ghostbox gb, struct ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct collision* collision_nearest, struct cell* c);
 
-void collisions_search(){
+void collisions_search(double _dt1, double _dt2){
 	// Loop over ghost boxes, but only the inner most ring.
 	int nghostxcol = (nghostx>1?1:nghostx);
 	int nghostycol = (nghosty>1?1:nghosty);

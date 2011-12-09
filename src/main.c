@@ -132,18 +132,20 @@ void iterate(){
 			communication_mpi_distribute_particles();
 #endif // MPI
 #ifndef COLLISIONS_NONE
+			if (integrator_substep_collisions_dt1[i]!=0. || integrator_substep_collisions_dt2[i]!=0.){
 #ifdef COLLISIONS_TREE
 #ifdef MPI
-			// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-			tree_prepare_essential_tree_for_collisions();
-			// Transfer essential tree and particles needed for collisions.
-			communication_mpi_distribute_essential_tree_for_collisions();
+				// Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+				tree_prepare_essential_tree_for_collisions();
+				// Transfer essential tree and particles needed for collisions.
+				communication_mpi_distribute_essential_tree_for_collisions();
 #endif // MPI
 #endif // COLLISIONS_TREE
-			// Search for collisions using local and essential tree.
-			collisions_search();
-			// Resolve collisions (only local particles are affected).
-			collisions_resolve();
+				// Search for collisions using local and essential tree.
+				collisions_search(dt*integrator_substep_collisions_dt1[i],dt*integrator_substep_collisions_dt2[i]);
+				// Resolve collisions (only local particles are affected).
+				collisions_resolve();
+			}
 #endif  // COLLISIONS_NONE
 		}
 	}

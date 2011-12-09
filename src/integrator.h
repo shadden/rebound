@@ -32,6 +32,8 @@ enum integrator_substep_type{
 
 extern const int integrator_substep_N;
 extern const enum integrator_substep_type integrator_substeps[];
+extern const double integrator_substep_collisions_dt1[];
+extern const double integrator_substep_collisions_dt2[];
 
 /*
  * Integrate the system during substep part.

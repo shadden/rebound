@@ -61,8 +61,10 @@ void integrator_wh_to_jacobi();
 void integrator_wh_from_jacobi();
 
 
-const int integrator_substep_N   = 3;
-const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK, IST_DRIFT};
+const int    integrator_substep_N   = 3;
+const enum   integrator_substep_type integrator_substeps[3] = {IST_DRIFT, IST_KICK, IST_DRIFT};
+const double integrator_substep_collisions_dt1[3] = {0.,0.,.5,};
+const double integrator_substep_collisions_dt2[3] = {0.,0.,.5,};
 
 void integrator_part0();
 void integrator_part1();

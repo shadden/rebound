@@ -229,8 +229,11 @@ void collisions_sweep_insertionsort_particles(){
 }
 
 
-
-void collisions_search(){
+double collisions_dt1;
+double collisions_dt2;
+void collisions_search(double _dt1, double _dt2){
+	collisions_dt1 = _dt1;
+	collisions_dt2 = _dt2;
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
 #ifdef OPENMP
@@ -254,8 +257,8 @@ void collisions_search(){
 		double r = sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y);
 		double w = (particles[i].x*particles[i].vy - particles[i].y*particles[i].vx) / r;
 		if (w != w) continue;
-		double oldphi = phi-0.5*dt*w-collisions_max_r/r*2.*M_PI;	
-		double newphi = phi+0.5*dt*w+collisions_max_r/r*2.*M_PI;	
+		double oldphi = phi-collisions_dt1*w-collisions_max_r/r*2.*M_PI;	
+		double newphi = phi+collisions_dt2*w+collisions_max_r/r*2.*M_PI;	
 		add_to_phivlist(oldphi,newphi,i);
 	}
 	
@@ -340,7 +343,7 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing){
 			time2=time1;
 			time1=tmp;
 		}
-		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
+		if ( (time1>-collisions_dt1 && time1<collisions_dt2) || (time1<-collisions_dt1 && time2>collisions_dt2) ){
 			struct collisionlist* clisti = &(clist[proci]);
 			if (clisti->N>=clisti->Nmax){
 				clisti->Nmax	 	+= 1024;
@@ -349,7 +352,7 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing){
 			struct collision* c = &(clisti->collisions[clisti->N]);
 			c->p1		= pt1;
 			c->p2		= pt2;
-			if ( (time1>-dt/2. && time1<dt/2.)) { 
+			if ( (time1>-collisions_dt1 && time1<collisions_dt2)) { 
 				c->time 	= time1;
 			}else{
 				c->time 	= 0;

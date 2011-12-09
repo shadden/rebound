@@ -55,7 +55,7 @@ int 	collisions_N 		= 0;		/**< Number of elements in collisions. */
 double 	collisions_max_r	= 0;
 double 	collisions_max2_r	= 0;
 
-void collisions_search(){
+void collisions_search(double _dt1, double _dt2){
 	// Loop over ghost boxes, but only the inner most ring.
 	int nghostxcol = (nghostx>1?1:nghostx);
 	int nghostycol = (nghosty>1?1:nghosty);

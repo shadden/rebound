@@ -227,8 +227,11 @@ void collisions_sweep_insertionsort_particles(){
 }
 
 
-
-void collisions_search(){
+double collisions_dt1;
+double collisions_dt2;
+void collisions_search(double _dt1, double _dt2){
+	collisions_dt1 = _dt1;
+	collisions_dt2 = _dt2;
 	if (sweeps_init_done!=1){
 		sweeps_init_done = 1;
 #ifdef OPENMP
@@ -247,8 +250,8 @@ void collisions_search(){
 #endif //TREE
 	}
 	for (int i=0;i<N;i++){
-		double oldx = particles[i].x-0.5*dt*particles[i].vx;	
-		double newx = particles[i].x+0.5*dt*particles[i].vx;	
+		double oldx = particles[i].x-collisions_dt1*particles[i].vx;	
+		double newx = particles[i].x+collisions_dt2*particles[i].vx;	
 		add_to_xvlist(oldx,newx,i);
 	}
 	
@@ -348,7 +351,7 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 			time2=time1;
 			time1=tmp;
 		}
-		if ( (time1>-dt/2. && time1<dt/2.) || (time1<-dt/2. && time2>dt/2.) ){
+		if ( (time1>-collisions_dt1 && time1<collisions_dt2) || (time1<-collisions_dt1 && time2>collisions_dt2) ){
 			struct collisionlist* clisti = &(clist[proci]);
 			if (clisti->N>=clisti->Nmax){
 				clisti->Nmax	 	+= 1024;
@@ -358,7 +361,7 @@ void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct 
 			c->p1		= pt1;
 			c->p2		= pt2;
 			c->gb	 	= gb;
-			if ( (time1>-dt/2. && time1<dt/2.)) { 
+			if ( (time1>-collisions_dt1 && time1<collisions_dt2)) { 
 				c->time 	= time1;
 			}else{
 				c->time 	= 0;

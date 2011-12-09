@@ -36,7 +36,7 @@
  * This routine searches for all collisions and stores them to 
  * resolve them when called collisions_resolve().
  */
-void collisions_search();
+void collisions_search(double _dt1, double _dt2);
 /**
  * Resolve all collisions.
  * This function resolve all previously found collisions.

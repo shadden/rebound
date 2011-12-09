@@ -37,7 +37,7 @@
 #include "gravity.h"
 
 const int integrator_substep_N   = 2;
-const enum integrator_substep_type integrator_substeps[5] = {IST_DRIFT, IST_KICK};
+const enum integrator_substep_type integrator_substeps[3] = {IST_DRIFT, IST_KICK};
 
 void integrator_part0();
 void integrator_part1();
