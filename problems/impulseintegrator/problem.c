@@ -44,7 +44,7 @@ extern int Nmax;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	softening 	= 0.01;		
+	softening 	= 0.1;		
 	dt 		= 3e-4;
 	boxsize 	= 10;
 	root_nx = 1; root_ny = 1; root_nz = 1;
