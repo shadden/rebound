@@ -45,24 +45,25 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 	softening 	= 0.1;		
-	dt 		= 3e-4;
+	dt 		= 3e-3;
 	boxsize 	= 10;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
-/**
- * This function sets up a Plummer sphere.
- * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
- * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
- * @param _N Number of particles in the plummer sphere.
- * @param mlow Lower mass fraction cutoff (can be 0).
- * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
- * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
- * @param scale Scales the final model before adding it to the simulation.
- * @param shift Shift the entire sphere in position and velocity space (6 values). 
- */
+	
+	/**
+	 * This function sets up a Plummer sphere.
+	 * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
+	 * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
+	 * @param _N Number of particles in the plummer sphere.
+	 * @param mlow Lower mass fraction cutoff (can be 0).
+	 * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
+	 * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
+	 * @param scale Scales the final model before adding it to the simulation.
+	 * @param shift Shift the entire sphere in position and velocity space (6 values). 
+	 */
 	double shift[6] = {0,0,0,0,0,0};
-	tools_init_plummer(100, 0., 1, 2, 1, shift);
+	tools_init_plummer(100, 0., 1, 0, 1, shift);
 
 }
 

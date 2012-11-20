@@ -45,13 +45,22 @@ struct xyz {
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
+
+struct xyz* x; 
+struct xyz* v; 
+struct xyz* xp; 
+struct xyz* xpp;
+struct xyz* vpp;
+long _arraymax = 0;
 void integrator_part1(){
-	struct xyz* x = calloc(sizeof(struct xyz),N);
-	struct xyz* v = calloc(sizeof(struct xyz),N);
-	struct xyz* xp = calloc(sizeof(struct xyz),N);
-	struct xyz* vp = calloc(sizeof(struct xyz),N);
-	struct xyz* xpp = calloc(sizeof(struct xyz),N);
-	struct xyz* vpp = calloc(sizeof(struct xyz),N);
+	if (_arraymax<N){
+		x   = realloc(x,  sizeof(struct xyz)*N);
+		v   = realloc(v,  sizeof(struct xyz)*N);
+		xp  = realloc(xp, sizeof(struct xyz)*N);
+		xpp = realloc(xpp,sizeof(struct xyz)*N);
+		vpp = realloc(vpp,sizeof(struct xyz)*N);
+		_arraymax = N;
+	}
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		// Initial conditions
@@ -65,18 +74,16 @@ void integrator_part1(){
 		xp[i].x = x[i].x+dt*v[i].x;
 		xp[i].y = x[i].y+dt*v[i].y;
 		xp[i].z = x[i].z+dt*v[i].z;
-		vp[i].x = v[i].x;
-		vp[i].y = v[i].y;
-		vp[i].z = v[i].z;
 	}
+	// Do 5 iterations. Let's hope we're converged.
 	for (int iterations=0;iterations<5;iterations++){
 		for (int i=0;i<N;i++){
+			xpp[i].x = x[i].x+dt*v[i].x;
+			xpp[i].y = x[i].y+dt*v[i].y;
+			xpp[i].z = x[i].z+dt*v[i].z;
 			vpp[i].x = v[i].x;
 			vpp[i].y = v[i].y;
 			vpp[i].z = v[i].z;
-			xpp[i].x = x[i].x+v[i].x*dt;
-			xpp[i].y = x[i].y+v[i].y*dt;
-			xpp[i].z = x[i].z+v[i].z*dt;
 			for (int j=0;j<N;j++){
 				if (i!=j){
 					struct xyz _xp;
@@ -98,9 +105,9 @@ void integrator_part1(){
 						_xp_v_tau.y = _xp.y-_v.y*dt;
 						_xp_v_tau.z = _xp.z-_v.z*dt;
 						double s = sqrt(_xp_v_tau.x*_xp_v_tau.x + _xp_v_tau.y*_xp_v_tau.y + _xp_v_tau.z*_xp_v_tau.z + softening*softening);
-						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v)));
+						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
 						
-						// Calculating the new xv prime
+						// Calculating the new v prime
 						vpp[i].x += -prefactor*(_v.x*(y2-_xp_v*dt) + _xp.x*(_v2*dt-_xp_v));
 						vpp[i].y += -prefactor*(_v.y*(y2-_xp_v*dt) + _xp.y*(_v2*dt-_xp_v));
 						vpp[i].z += -prefactor*(_v.z*(y2-_xp_v*dt) + _xp.z*(_v2*dt-_xp_v));
@@ -113,9 +120,10 @@ void integrator_part1(){
 						xpp[i].z += prefactor * _xp.z * (y2-_xp_v*dt);
 						
 						// Second term in bracket
-						xpp[i].x -= prefactor * _v.x / _v2 * (y2*_xp_v + _v2*y2*dt-2.*dt*_xp_v*_xp_v);
-						xpp[i].y -= prefactor * _v.y / _v2 * (y2*_xp_v + _v2*y2*dt-2.*dt*_xp_v*_xp_v);
-						xpp[i].z -= prefactor * _v.z / _v2 * (y2*_xp_v + _v2*y2*dt-2.*dt*_xp_v*_xp_v);
+						double numerator = y2*_xp_v + _v2*y2*dt-2.*dt*_xp_v*_xp_v;
+						xpp[i].x -= prefactor * _v.x / _v2 * numerator;
+						xpp[i].y -= prefactor * _v.y / _v2 * numerator;
+						xpp[i].z -= prefactor * _v.z / _v2 * numerator;
 						
 						// Third term in bracket
 						double _log = log(_v2*dt-_xp_v+_v1*s);
@@ -124,14 +132,10 @@ void integrator_part1(){
 						xpp[i].z -= G*particles[j].m*_v.z/_v3 * _log;
 					}
 					{	// tau = 0
-						struct xyz _xp_v_tau;
-						_xp_v_tau.x = _xp.x;
-						_xp_v_tau.y = _xp.y;
-						_xp_v_tau.z = _xp.z;
-						double s = sqrt(_xp_v_tau.x*_xp_v_tau.x + _xp_v_tau.y*_xp_v_tau.y + _xp_v_tau.z*_xp_v_tau.z + softening*softening);
-						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v)));
+						double s = sqrt(_xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening);
+						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
 
-						// Calculating the new xv prime
+						// Calculating the new v prime
 						vpp[i].x -= -prefactor*(_v.x*(y2) + _xp.x*(-_xp_v));
 						vpp[i].y -= -prefactor*(_v.y*(y2) + _xp.y*(-_xp_v));
 						vpp[i].z -= -prefactor*(_v.z*(y2) + _xp.z*(-_xp_v));
@@ -144,9 +148,10 @@ void integrator_part1(){
 						xpp[i].z -= prefactor * _xp.z * (y2);
 						
 						// Second term in bracket
-						xpp[i].x += prefactor * _v.x / _v2 * (y2*_xp_v);
-						xpp[i].y += prefactor * _v.y / _v2 * (y2*_xp_v);
-						xpp[i].z += prefactor * _v.z / _v2 * (y2*_xp_v);
+						double numerator = y2*_xp_v;
+						xpp[i].x += prefactor * _v.x / _v2 * numerator;
+						xpp[i].y += prefactor * _v.y / _v2 * numerator;
+						xpp[i].z += prefactor * _v.z / _v2 * numerator;
 						
 						// Third term in bracket
 						double _log = log(-_xp_v+_v1*s);
@@ -162,20 +167,17 @@ void integrator_part1(){
 			xp[i].x = xpp[i].x;
 			xp[i].y = xpp[i].y;
 			xp[i].z = xpp[i].z;
-			vp[i].x = vpp[i].x;
-			vp[i].y = vpp[i].y;
-			vp[i].z = vpp[i].z;
 		}
 	}
 	
 	// Set variables for next iteration;
 	for (int i=0;i<N;i++){
-		particles[i].x = xp[i].x;
-		particles[i].y = xp[i].y;
-		particles[i].z = xp[i].z;
-		particles[i].vx = vp[i].x;
-		particles[i].vy = vp[i].y;
-		particles[i].vz = vp[i].z;
+		particles[i].x  = xp[i].x;
+		particles[i].y  = xp[i].y;
+		particles[i].z  = xp[i].z;
+		particles[i].vx = vpp[i].x;
+		particles[i].vy = vpp[i].y;
+		particles[i].vz = vpp[i].z;
 	}
 
 	t+=dt;
