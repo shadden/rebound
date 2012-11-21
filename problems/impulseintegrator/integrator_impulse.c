@@ -46,35 +46,34 @@ struct xyz {
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 
-struct xyz* x; 
 struct xyz* xp; 
 struct xyz* xpp;
+struct xyz* vp;
 long _arraymax = 0;
 void integrator_part1(){
 	if (_arraymax<N){
-		x   = realloc(x,  sizeof(struct xyz)*N);
 		xp  = realloc(xp, sizeof(struct xyz)*N);
 		xpp = realloc(xpp,sizeof(struct xyz)*N);
+		vp = realloc(xpp,sizeof(struct xyz)*N);
 		_arraymax = N;
 	}
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
-		// Initial conditions
-		x[i].x = particles[i].x;
-		x[i].y = particles[i].y;
-		x[i].z = particles[i].z;
 		// Initial guess
-		xp[i].x = x[i].x+dt*particles[i].vx;
-		xp[i].y = x[i].y+dt*particles[i].vy;
-		xp[i].z = x[i].z+dt*particles[i].vz;
+		xp[i].x = particles[i].x+dt*particles[i].vx;
+		xp[i].y = particles[i].y+dt*particles[i].vy;
+		xp[i].z = particles[i].z+dt*particles[i].vz;
+		vp[i].x = particles[i].vx;
+		vp[i].y = particles[i].vy;
+		vp[i].z = particles[i].vz;
 	}
 	// Do 5 iterations. Let's hope we're converged.
-	int iterations_N = 5;
-	for (int iterations=0;iterations<iterations_N;iterations++){
+	int iterations_N = 3;
+	for (int iterations=0; iterations<iterations_N; iterations++){
 		for (int i=0;i<N;i++){
-			xpp[i].x = x[i].x+dt*particles[i].vx;
-			xpp[i].y = x[i].y+dt*particles[i].vy;
-			xpp[i].z = x[i].z+dt*particles[i].vz;
+			xpp[i].x = particles[i].x+dt*particles[i].vx;
+			xpp[i].y = particles[i].y+dt*particles[i].vy;
+			xpp[i].z = particles[i].z+dt*particles[i].vz;
 			for (int j=0;j<N;j++){
 				if (i!=j){
 					struct xyz _xp;
@@ -100,9 +99,9 @@ void integrator_part1(){
 						
 						// Calculating the new v prime
 						if (iterations==iterations_N-1){
-							particles[i].vx += -prefactor*(_v.x*(y2-_xp_v*dt) + _xp.x*(_v2*dt-_xp_v));
-							particles[i].vy += -prefactor*(_v.y*(y2-_xp_v*dt) + _xp.y*(_v2*dt-_xp_v));
-							particles[i].vz += -prefactor*(_v.z*(y2-_xp_v*dt) + _xp.z*(_v2*dt-_xp_v));
+							vp[i].x -= prefactor*(_v.x*(y2-_xp_v*dt) + _xp.x*(_v2*dt-_xp_v));
+							vp[i].y -= prefactor*(_v.y*(y2-_xp_v*dt) + _xp.y*(_v2*dt-_xp_v));
+							vp[i].z -= prefactor*(_v.z*(y2-_xp_v*dt) + _xp.z*(_v2*dt-_xp_v));
 						}
 
 
@@ -130,9 +129,9 @@ void integrator_part1(){
 
 						// Calculating the new v prime
 						if (iterations==iterations_N-1){
-							particles[i].vx -= -prefactor*(_v.x*(y2) + _xp.x*(-_xp_v));
-							particles[i].vy -= -prefactor*(_v.y*(y2) + _xp.y*(-_xp_v));
-							particles[i].vz -= -prefactor*(_v.z*(y2) + _xp.z*(-_xp_v));
+							vp[i].x += prefactor*(_v.x*(y2) + _xp.x*(-_xp_v));
+							vp[i].y += prefactor*(_v.y*(y2) + _xp.y*(-_xp_v));
+							vp[i].z += prefactor*(_v.z*(y2) + _xp.z*(-_xp_v));
 						}
 						
 
@@ -167,9 +166,12 @@ void integrator_part1(){
 	
 	// Set variables for next iteration;
 	for (int i=0;i<N;i++){
-		particles[i].x  = xp[i].x;
-		particles[i].y  = xp[i].y;
-		particles[i].z  = xp[i].z;
+		particles[i].x   = xp[i].x;
+		particles[i].y   = xp[i].y;
+		particles[i].z   = xp[i].z;
+		particles[i].vx  = vp[i].x;
+		particles[i].vy  = vp[i].y;
+		particles[i].vz  = vp[i].z;
 	}
 
 	t+=dt;
