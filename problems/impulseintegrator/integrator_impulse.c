@@ -54,7 +54,7 @@ void integrator_part1(){
 	if (_arraymax<N){
 		xp  = realloc(xp, sizeof(struct xyz)*N);
 		xpp = realloc(xpp,sizeof(struct xyz)*N);
-		vp = realloc(xpp,sizeof(struct xyz)*N);
+		vp  = realloc(vp, sizeof(struct xyz)*N);
 		_arraymax = N;
 	}
 #pragma omp parallel for schedule(guided)
@@ -68,7 +68,7 @@ void integrator_part1(){
 		vp[i].z = particles[i].vz;
 	}
 	// Do 5 iterations. Let's hope we're converged.
-	int iterations_N = 3;
+	int iterations_N = 5;
 	for (int iterations=0; iterations<iterations_N; iterations++){
 		for (int i=0;i<N;i++){
 			xpp[i].x = particles[i].x+dt*particles[i].vx;
