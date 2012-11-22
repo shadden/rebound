@@ -44,8 +44,8 @@ extern int Nmax;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	softening 	= 0.1;		
-	dt 		= 3e-1;
+	softening 	= 0.01;		
+	dt 		= 1;
 	boxsize 	= 10;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
@@ -96,6 +96,19 @@ void problem_init(int argc, char* argv[]){
 		};
 	particles_add(planet4);
 	*/
+
+	double v = 0;
+	for (int i=0;i<N;i++){
+		v += sqrt(particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz);
+	}
+	printf("System size: %f\n", 1.);
+	printf("Smoothing length: %f\n", softening);
+	printf("Interparticle separation: %f\n", 1./powf((double)N,1./3.));
+	printf("Characteristic velocity: %f\n", sqrt(G*(double)N*particles[0].m/1.));
+	printf("Mean velocity: %f\n", v/(double)N);
+	printf("Crossing time: %f\n", 1./(v/(double)N));
+	printf("Encounter time: %f\n", 1./(v/(double)N)/powf((double)N,1./3.));
+	printf("Timestep: %f\n", dt);
 }
 
 void problem_inloop(){
