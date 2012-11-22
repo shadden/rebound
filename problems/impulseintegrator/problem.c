@@ -62,8 +62,38 @@ void problem_init(int argc, char* argv[]){
 	 * @param scale Scales the final model before adding it to the simulation.
 	 * @param shift Shift the entire sphere in position and velocity space (6 values). 
 	 */
-	double shift[6] = {0,0,0,0,0,0};
-	tools_init_plummer(100, 0., 1, 0, 1, shift);
+	//double shift[6] = {0,0,0,0,0,0};
+	//tools_init_plummer(100, 0., 1, 0, 1, shift);
+	struct particle star = {
+		.m=1,
+		.x=0,.y=0,.z=0.,
+		.vx=0,.vy=0,.vz=0.
+		};
+	particles_add(star);
+	struct particle planet1 = {
+		.m=0.001,
+		.x=1,.y=0,.z=0.,
+		.vx=0,.vy=1,.vz=0.
+		};
+	particles_add(planet1);
+	struct particle planet2 = {
+		.m=0.001,
+		.x=0,.y=-1,.z=0.,
+		.vx=1,.vy=0,.vz=0.
+		};
+	particles_add(planet2);
+	struct particle planet3 = {
+		.m=0.001,
+		.x=0,.y=1,.z=0.,
+		.vx=-1,.vy=0,.vz=0.
+		};
+	particles_add(planet3);
+	struct particle planet4 = {
+		.m=0.001,
+		.x=-1,.y=0,.z=0.,
+		.vx=0,.vy=-1,.vz=0.
+		};
+	particles_add(planet4);
 
 }
 

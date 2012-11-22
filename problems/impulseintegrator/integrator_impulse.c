@@ -84,11 +84,11 @@ void integrator_part1(){
 					_v.x = particles[i].vx - particles[j].vx;
 					_v.y = particles[i].vy - particles[j].vy;
 					_v.z = particles[i].vz - particles[j].vz;
-					double _v2 = _v.x*_v.x + _v.y*_v.y + _v.z*_v.z; 
-					double _v1  = sqrt(_v2); 
-					double _v3 = _v2*_v1;
-					double y2 = _xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening;
-					double _xp_v = _xp.x*_v.x + _xp.y*_v.y + _xp.z*_v.z;
+					double _v2 	= _v.x*_v.x + _v.y*_v.y + _v.z*_v.z; 
+					double _v1  	= sqrt(_v2); 
+					double _v3 	= _v2*_v1;
+					double y2 	= _xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening;
+					double _xp_v 	= _xp.x*_v.x  + _xp.y*_v.y  + _xp.z*_v.z;
 					{	// tau = dt
 						struct xyz _xp_v_tau;
 						_xp_v_tau.x = _xp.x - _v.x*dt;
