@@ -45,7 +45,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 	softening 	= 0.1;		
-	dt 		= 3e-3;
+	dt 		= 3e-1;
 	boxsize 	= 10;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
@@ -62,8 +62,9 @@ void problem_init(int argc, char* argv[]){
 	 * @param scale Scales the final model before adding it to the simulation.
 	 * @param shift Shift the entire sphere in position and velocity space (6 values). 
 	 */
-	//double shift[6] = {0,0,0,0,0,0};
-	//tools_init_plummer(100, 0., 1, 0, 1, shift);
+	double shift[6] = {0,0,0,0,0,0};
+	tools_init_plummer(100, 0., 1, 0, 1, shift);
+	/*
 	struct particle star = {
 		.m=1,
 		.x=0,.y=0,.z=0.,
@@ -94,7 +95,7 @@ void problem_init(int argc, char* argv[]){
 		.vx=0,.vy=-1,.vz=0.
 		};
 	particles_add(planet4);
-
+	*/
 }
 
 void problem_inloop(){

@@ -119,9 +119,9 @@ void integrator_part1(){
 						
 						// Third term in bracket
 						double _log = log(_v2*dt-_xp_v+_v1*s);
-						xpp[i].x -= G*particles[j].m*_v.x/_v3 * _log;
-						xpp[i].y -= G*particles[j].m*_v.y/_v3 * _log;
-						xpp[i].z -= G*particles[j].m*_v.z/_v3 * _log;
+						xpp[i].x += G*particles[j].m*_v.x/_v3 * _log;
+						xpp[i].y += G*particles[j].m*_v.y/_v3 * _log;
+						xpp[i].z += G*particles[j].m*_v.z/_v3 * _log;
 					}
 					{	// tau = 0
 						double s = sqrt(_xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening);
@@ -149,9 +149,9 @@ void integrator_part1(){
 						
 						// Third term in bracket
 						double _log = log(-_xp_v+_v1*s);
-						xpp[i].x += G*particles[j].m*_v.x/_v3 * _log;
-						xpp[i].y += G*particles[j].m*_v.y/_v3 * _log;
-						xpp[i].z += G*particles[j].m*_v.z/_v3 * _log;
+						xpp[i].x -= G*particles[j].m*_v.x/_v3 * _log;
+						xpp[i].y -= G*particles[j].m*_v.y/_v3 * _log;
+						xpp[i].z -= G*particles[j].m*_v.z/_v3 * _log;
 					}
 				}
 			}
