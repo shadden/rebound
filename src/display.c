@@ -253,7 +253,7 @@ void display(){
 		}
 		// Drawing wires
 		if (display_wire){
-#ifndef INTEGRATOR_SEI
+#ifdef INTEGRATOR_WH
 			double radius = 0;
 			struct particle com = particles[0];
 			for (int i=1;i<N;i++){
@@ -295,9 +295,9 @@ void display(){
 			for (int i=1;i<N;i++){
 				struct particle p = particles[i];
 				glBegin(GL_LINE_LOOP);
-				for (double _t=-100.*dt;_t<=100.*dt;_t+=20.*dt){
-					double frac = 1.-fabs(_t/(120.*dt));
-					glColor4f(1.0,(_t+100.*dt)/(200.*dt),0.0,frac);
+				for (double _t=-1.*dt;_t<=1.*dt;_t+=.2*dt){
+					double frac = 1.-fabs(_t/(1.20*dt));
+					glColor4f(1.0,(_t+1.*dt)/(2.*dt),0.0,frac);
 					glVertex3f(p.x+p.vx*_t, p.y+p.vy*_t, p.z+p.vz*_t);
 				}
 				glEnd();

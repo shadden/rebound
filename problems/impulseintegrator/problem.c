@@ -37,6 +37,7 @@
 #include "output.h"
 #include "communication_mpi.h"
 #include "tree.h"
+#include "input.h"
 #include "tools.h"
 
 extern int Nmax;
@@ -45,8 +46,9 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 	softening 	= 0.01;		
-	dt 		= 1;
+	dt		= input_get_double(argc,argv,"dt",0.0001);
 	boxsize 	= 10;
+	tmax		= 1;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
@@ -63,6 +65,7 @@ void problem_init(int argc, char* argv[]){
 	 * @param shift Shift the entire sphere in position and velocity space (6 values). 
 	 */
 	double shift[6] = {0,0,0,0,0,0};
+	srand(0);
 	tools_init_plummer(100, 0., 1, 0, 1, shift);
 	/*
 	struct particle star = {
@@ -118,5 +121,30 @@ void problem_output(){
 	if (output_check(10.0*dt)) output_timing();
 }
 
+
+void calculate_error(){
+	FILE* inf = fopen("leapfrog.bin","rb"); 
+	double dif = 0;
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		double pos[3];
+		fread(&pos,sizeof(double)*3,1,inf);
+		double dx = pos[0] - p.x;
+		double dy = pos[1] - p.y;
+		double dz = pos[2] - p.z;
+		dif += sqrt(dx*dx + dy*dy + dz*dz);
+	}
+	dif /= (double)N;
+	fclose(inf);
+	printf("difference: %e\n",dif);
+	FILE* of = fopen("error.txt","a+"); 
+	fprintf(of,"%e\t%e\n",dt,dif);
+	fclose(of);
+}
+
+
 void problem_finish(){
+	printf("\nFinished. Time: %f\n",t);
+//	output_binary_positions("leapfrog.bin");
+	calculate_error();
 }

@@ -1,5 +1,5 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
-export OPENGL=1
+export OPENGL=0
 export OPT=-O3
 export QUADRUPOLE=0
 export MPI=0
@@ -32,6 +32,17 @@ leapfrog:
 
 doc: all
 	$(MAKE) -C ../../src/ doc
+
+test:
+	./nbody --dt=1
+	./nbody --dt=0.2
+	./nbody --dt=0.1
+	./nbody --dt=0.02
+	./nbody --dt=0.01
+	./nbody --dt=0.002
+	./nbody --dt=0.001
+	./nbody --dt=0.0002
+	./nbody --dt=0.0001
 
 clean:
 	$(MAKE) -C ../../src/ clean
