@@ -2,11 +2,7 @@
  * @file 	integrator.c
  * @brief 	Leap-frog integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @detail	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
- * 
+ * @detail	 
  * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
@@ -43,8 +39,6 @@ struct xyz {
 	double z;
 };
 
-// Leapfrog integrator (Drift-Kick-Drift)
-// for non-rotating frame.
 
 struct xyz* xp; 
 struct xyz* xpp;
@@ -113,7 +107,7 @@ void integrator_part1(){
 						
 						// Second term in bracket
 						double numerator = y2*_xp_v + _v2*y2*dt - 2.*dt*_xp_v*_xp_v;
-						xpp[i].x -= prefactor * _v.x / _v2 * numerator;
+						xpp[i].x -= prefactor * _v.x / _v2 * numerator;  // TODO _v2 factor looks suspicieous
 						xpp[i].y -= prefactor * _v.y / _v2 * numerator;
 						xpp[i].z -= prefactor * _v.z / _v2 * numerator;
 						
@@ -143,7 +137,7 @@ void integrator_part1(){
 						
 						// Second term in bracket
 						double numerator = y2*_xp_v;
-						xpp[i].x += prefactor * _v.x / _v2 * numerator;
+						xpp[i].x += prefactor * _v.x / _v2 * numerator; // TODO once again, _v2 looks strange
 						xpp[i].y += prefactor * _v.y / _v2 * numerator;
 						xpp[i].z += prefactor * _v.z / _v2 * numerator;
 						
