@@ -56,8 +56,8 @@ void integrator_part1(){
 	}
 	// Do 5 iterations. Let's hope we're converged.
 	int iterations_N = 5;
-//	oddeven = !oddeven;
-	oddeven=1;	
+	oddeven = !oddeven;
+	//oddeven=1;	
 	if (oddeven==0){
 		// x prime
 		for (int i=0;i<N;i++){
@@ -294,9 +294,9 @@ void integrator_part1(){
 						
 						// Log Term
 						double _log = log((_vp1*sb-_vp2*dt-_x_vp) / (_vp1*yb1-_x_vp));
-						xp[i].x += G*particles[j].m*_vp.x/_vp3 * _log;
-						xp[i].y += G*particles[j].m*_vp.y/_vp3 * _log;
-						xp[i].z += G*particles[j].m*_vp.z/_vp3 * _log;
+						xp[i].x -= G*particles[j].m*_vp.x/_vp3 * _log;
+						xp[i].y -= G*particles[j].m*_vp.y/_vp3 * _log;
+						xp[i].z -= G*particles[j].m*_vp.z/_vp3 * _log;
 					}
 					{	// tau = 0
 						double sb = sqrt(_x.x*_x.x + _x.y*_x.y + _x.z*_x.z + softening*softening);
