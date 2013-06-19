@@ -45,7 +45,7 @@ struct xyz* xpp;
 struct xyz* vp;
 struct xyz* vpp;
 long _arraymax = 0;
-bool oddeven = 0;
+int oddeven = 0;
 void integrator_part1(){
 	if (_arraymax<N){
 		xp  = realloc(xp, sizeof(struct xyz)*N);
@@ -54,8 +54,11 @@ void integrator_part1(){
 		vpp  = realloc(vp, sizeof(struct xyz)*N);
 		_arraymax = N;
 	}
-	oddeven = !oddeven;
-	if (oddeven){
+	// Do 5 iterations. Let's hope we're converged.
+	int iterations_N = 5;
+//	oddeven = !oddeven;
+	oddeven=1;	
+	if (oddeven==0){
 		// x prime
 		for (int i=0;i<N;i++){
 			// Initial guess
@@ -63,8 +66,6 @@ void integrator_part1(){
 			xp[i].y = particles[i].y+dt*particles[i].vy;
 			xp[i].z = particles[i].z+dt*particles[i].vz;
 		}
-		// Do 5 iterations. Let's hope we're converged.
-		int iterations_N = 5;
 		for (int iterations=0; iterations<iterations_N; iterations++){
 			for (int i=0;i<N;i++){
 				xpp[i].x = particles[i].x+dt*particles[i].vx;
@@ -103,12 +104,12 @@ void integrator_part1(){
 							
 							// Second term in bracket
 							double numerator = y2*_xp_v + _v2*y2*dt - 2.*dt*_xp_v*_xp_v;
-							xpp[i].x -= prefactor * _v.x / _v2 * numerator;  
-							xpp[i].y -= prefactor * _v.y / _v2 * numerator;
-							xpp[i].z -= prefactor * _v.z / _v2 * numerator;
+							xpp[i].x += -prefactor * _v.x / _v2 * numerator;  
+							xpp[i].y += -prefactor * _v.y / _v2 * numerator;
+							xpp[i].z += -prefactor * _v.z / _v2 * numerator;
 							
-							// Third term in bracket
-							double _log = log((_v2*dt-_xp_v+_v1*s) / (_v1*y1-_xp_v));
+							// Log Term
+							double _log = log((_v1*s+_v2*dt-_xp_v) / (_v1*y1-_xp_v));
 							xpp[i].x += G*particles[j].m*_v.x/_v3 * _log;
 							xpp[i].y += G*particles[j].m*_v.y/_v3 * _log;
 							xpp[i].z += G*particles[j].m*_v.z/_v3 * _log;
@@ -126,15 +127,9 @@ void integrator_part1(){
 							
 							// Second term in bracket
 							double numerator = y2*_xp_v;
-							xpp[i].x += prefactor * _v.x / _v2 * numerator; 
-							xpp[i].y += prefactor * _v.y / _v2 * numerator;
-							xpp[i].z += prefactor * _v.z / _v2 * numerator;
-							
-							// Third term in bracket
-							double _log = log((-_xp_v+_v1*s) / (_v1*y1-_xp_v));
-							xpp[i].x -= G*particles[j].m*_v.x/_v3 * _log;
-							xpp[i].y -= G*particles[j].m*_v.y/_v3 * _log;
-							xpp[i].z -= G*particles[j].m*_v.z/_v3 * _log;
+							xpp[i].x -= -prefactor * _v.x / _v2 * numerator; 
+							xpp[i].y -= -prefactor * _v.y / _v2 * numerator;
+							xpp[i].z -= -prefactor * _v.z / _v2 * numerator;
 						}
 					}
 				}
@@ -163,8 +158,6 @@ void integrator_part1(){
 					_v.y = particles[i].vy - particles[j].vy;
 					_v.z = particles[i].vz - particles[j].vz;
 					double _v2 	= _v.x*_v.x + _v.y*_v.y + _v.z*_v.z; 
-					double _v1  	= sqrt(_v2); 
-					double _v3 	= _v2*_v1;
 					double y2 	= _xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening;
 					double _xp_v 	= _xp.x*_v.x  + _xp.y*_v.y  + _xp.z*_v.z;
 					{	// tau = dt
@@ -173,18 +166,18 @@ void integrator_part1(){
 						_xp_v_tau.y = _xp.y - _v.y*dt;
 						_xp_v_tau.z = _xp.z - _v.z*dt;
 						double s = sqrt(_xp_v_tau.x*_xp_v_tau.x + _xp_v_tau.y*_xp_v_tau.y + _xp_v_tau.z*_xp_v_tau.z + softening*softening);
-						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
-						vp[i].x -= prefactor*(_v.x*(y2-_xp_v*dt) + _xp.x*(_v2*dt-_xp_v));
-						vp[i].y -= prefactor*(_v.y*(y2-_xp_v*dt) + _xp.y*(_v2*dt-_xp_v));
-						vp[i].z -= prefactor*(_v.z*(y2-_xp_v*dt) + _xp.z*(_v2*dt-_xp_v));
+						double prefactor = -G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
+						vp[i].x += prefactor*(_v.x*(y2-_xp_v*dt) + _xp.x*(_v2*dt-_xp_v));
+						vp[i].y += prefactor*(_v.y*(y2-_xp_v*dt) + _xp.y*(_v2*dt-_xp_v));
+						vp[i].z += prefactor*(_v.z*(y2-_xp_v*dt) + _xp.z*(_v2*dt-_xp_v));
 					}
 
 					{	// tau = 0
 						double s = sqrt(_xp.x*_xp.x + _xp.y*_xp.y + _xp.z*_xp.z + softening*softening);
-						double prefactor = G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
-						vp[i].x += prefactor*(_v.x*(y2) + _xp.x*(-_xp_v));
-						vp[i].y += prefactor*(_v.y*(y2) + _xp.y*(-_xp_v));
-						vp[i].z += prefactor*(_v.z*(y2) + _xp.z*(-_xp_v));
+						double prefactor = -G*particles[j].m/(s*(_v2*y2-(_xp_v*_xp_v)));
+						vp[i].x -= prefactor*(_v.x*(y2) + _xp.x*(-_xp_v));
+						vp[i].y -= prefactor*(_v.y*(y2) + _xp.y*(-_xp_v));
+						vp[i].z -= prefactor*(_v.z*(y2) + _xp.z*(-_xp_v));
 					}
 				}
 			}
@@ -207,8 +200,6 @@ void integrator_part1(){
 			vp[i].y = particles[i].vy;
 			vp[i].z = particles[i].vz;
 		}
-		// Do 5 iterations. Let's hope we're converged.
-		int iterations_N = 5;
 		for (int iterations=0; iterations<iterations_N; iterations++){
 			for (int i=0;i<N;i++){
 				vpp[i].x = particles[i].vx;
@@ -221,12 +212,10 @@ void integrator_part1(){
 						_x.y = particles[i].y - particles[j].y;
 						_x.z = particles[i].z - particles[j].z;
 						struct xyz _vp;
-						_vp.x = vp[i].vx - vp[j].vx;
-						_vp.y = vp[i].vy - vp[j].vy;
-						_vp.z = vp[i].vz - vp[j].vz;
+						_vp.x = vp[i].x - vp[j].x;
+						_vp.y = vp[i].y - vp[j].y;
+						_vp.z = vp[i].z - vp[j].z;
 						double _vp2 	= _vp.x*_vp.x + _vp.y*_vp.y + _vp.z*_vp.z; 
-						double _vp1  	= sqrt(_vp2); 
-						double _vp3 	= _vp2*_vp1;
 						double yb2 	= _x.x*_x.x + _x.y*_x.y + _x.z*_x.z + softening*softening;
 						double _x_vp 	= _x.x*_vp.x  + _x.y*_vp.y  + _x.z*_vp.z;
 						{	// tau = dt
@@ -249,9 +238,9 @@ void integrator_part1(){
 							double prefactor = G*particles[j].m/(sb*(_vp2*yb2-(_x_vp*_x_vp)));
 
 							// Calculating the new v prime
-							vpp[i].x -= prefactor*(_vp.x*(yb2) + _x.x*(_x_vp));
-							vpp[i].y -= prefactor*(_vp.y*(yb2) + _x.y*(_x_vp));
-							vpp[i].z -= prefactor*(_vp.z*(yb2) + _x.z*(_x_vp));
+							vpp[i].x -= prefactor*(_vp.x*(yb2) - _x.x*(_x_vp));
+							vpp[i].y -= prefactor*(_vp.y*(yb2) - _x.y*(_x_vp));
+							vpp[i].z -= prefactor*(_vp.z*(yb2) - _x.z*(_x_vp));
 						}
 					}
 				}
@@ -275,9 +264,9 @@ void integrator_part1(){
 					_x.y = particles[i].y - particles[j].y;
 					_x.z = particles[i].z - particles[j].z;
 					struct xyz _vp;
-					_vp.x = vp[i].vx - vp[j].vx;
-					_vp.y = vp[i].vy - vp[j].vy;
-					_vp.z = vp[i].vz - vp[j].vz;
+					_vp.x = vp[i].x - vp[j].x;
+					_vp.y = vp[i].y - vp[j].y;
+					_vp.z = vp[i].z - vp[j].z;
 					double _vp2 	= _vp.x*_vp.x + _vp.y*_vp.y + _vp.z*_vp.z; 
 					double _vp1  	= sqrt(_vp2); 
 					double _vp3 	= _vp2*_vp1;
@@ -299,12 +288,12 @@ void integrator_part1(){
 						
 						// Second term in bracket
 						double numerator = yb2*_x_vp - _vp2*yb2*dt + 2.*dt*_x_vp*_x_vp;
-						xp[i].x -= prefactor * _vp.x / _vp2 * numerator; 
-						xp[i].y -= prefactor * _vp.y / _vp2 * numerator;
-						xp[i].z -= prefactor * _vp.z / _vp2 * numerator;
+						xp[i].x += -prefactor * _vp.x / _vp2 * numerator; 
+						xp[i].y += -prefactor * _vp.y / _vp2 * numerator;
+						xp[i].z += -prefactor * _vp.z / _vp2 * numerator;
 						
-						// Third term in bracket
-						double _log = log((_vp2*dt-_x_vp+_vp1*sb) / (_vp1*yb1-_x_vp));
+						// Log Term
+						double _log = log((_vp1*sb-_vp2*dt-_x_vp) / (_vp1*yb1-_x_vp));
 						xp[i].x += G*particles[j].m*_vp.x/_vp3 * _log;
 						xp[i].y += G*particles[j].m*_vp.y/_vp3 * _log;
 						xp[i].z += G*particles[j].m*_vp.z/_vp3 * _log;
@@ -320,15 +309,9 @@ void integrator_part1(){
 						
 						// Second term in bracket
 						double numerator = yb2*_x_vp;
-						xp[i].x += prefactor * _vp.x / _vp2 * numerator; 
-						xp[i].y += prefactor * _vp.y / _vp2 * numerator;
-						xp[i].z += prefactor * _vp.z / _vp2 * numerator;
-						
-						// Third term in bracket
-						double _log = log((-_x_vp+_vp1*sb) / (_vp1*yb1-_x_vp));
-						xp[i].x -= G*particles[j].m*_v.x/_v3 * _log;
-						xp[i].y -= G*particles[j].m*_v.y/_v3 * _log;
-						xp[i].z -= G*particles[j].m*_v.z/_v3 * _log;
+						xp[i].x -= -prefactor * _vp.x / _vp2 * numerator; 
+						xp[i].y -= -prefactor * _vp.y / _vp2 * numerator;
+						xp[i].z -= -prefactor * _vp.z / _vp2 * numerator;
 					}
 				}
 			}

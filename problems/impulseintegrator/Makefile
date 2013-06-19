@@ -34,6 +34,7 @@ doc: all
 	$(MAKE) -C ../../src/ doc
 
 test:
+	rm -v error.txt
 	./nbody --dt=1
 	./nbody --dt=0.2
 	./nbody --dt=0.1
