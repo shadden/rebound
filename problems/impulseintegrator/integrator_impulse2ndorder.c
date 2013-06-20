@@ -55,7 +55,7 @@ void integrator_part1(){
 		_arraymax = N;
 	}
 	// Do 5 iterations. Let's hope we're converged.
-	int iterations_N = 5;
+	int iterations_N = 2;
 	oddeven = !oddeven;
 	//oddeven=1;	
 	if (oddeven==0){
