@@ -46,7 +46,7 @@ int writeBest;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	softening 	= 1.;		
+	softening 	= 0.01;		
 	dt		= input_get_double(argc,argv,"dt",0.0001);
 	writeBest		= input_get_int(argc,argv,"write",0);
 	boxsize 	= 100;
@@ -131,53 +131,62 @@ void calculate_error(){
 		fread(&(vel[3*i]),sizeof(double)*3,1,inf);
 	}
 	fclose(inf);
-	double dif = 0;
+	double dif_pos = 0;
+	double dif_posabs = 0;
+	double dif_vel = 0;
 	for (int i=0;i<N;i++){
 		double dx = pos[3*i+0] - particles[i].x;
 		double dy = pos[3*i+1] - particles[i].y;
 		double dz = pos[3*i+2] - particles[i].z;
-		//double dvx = vel[3*i+0] - particles[i].vx;
-		//double dvy = vel[3*i+1] - particles[i].vy;
-		//double dvz = vel[3*i+2] - particles[i].vz;
-		//dif += sqrt(dx*dx + dy*dy + dz*dz + dvx*dvx + dvy*dvy + dvz*dvz)/(double)N;
-		dif += sqrt(dx*dx + dy*dy + dz*dz )/(double)N;
+		dif_pos += sqrt(dx*dx + dy*dy + dz*dz )/(double)N;
+		dif_posabs += fabs(dx)/(double)N;
+		dif_posabs += fabs(dy)/(double)N;
+		dif_posabs += fabs(dz)/(double)N;
+		double dvx = vel[3*i+0] - particles[i].vx;
+		double dvy = vel[3*i+1] - particles[i].vy;
+		double dvz = vel[3*i+2] - particles[i].vz;
+		dif_vel += sqrt(dvx*dvx + dvy*dvy + dvz*dvz )/(double)N;
 	}
-//	double energy_best = 0;
-//	for (int i=0;i<N;i++){
-//		for (int j=0;j<N;j++){
-//			if (i<j){
-//				double dx = pos[3*i+0] - pos[3*j+0];
-//				double dy = pos[3*i+1] - pos[3*j+1];
-//				double dz = pos[3*i+2] - pos[3*j+2];
-//				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-//				energy_best -= 1./r;
-//			}
-//		}
-//		double dvx = vel[3*i+0];
-//		double dvy = vel[3*i+1];
-//		double dvz = vel[3*i+2];
-//		energy_best += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
-//	}
-//	double energy = 0;
-//	for (int i=0;i<N;i++){
-//		for (int j=0;j<N;j++){
-//			if (i<j){
-//				double dx = particles[i].x - particles[j].x;
-//				double dy = particles[i].y - particles[j].y;
-//				double dz = particles[i].z - particles[j].z;
-//				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-//				energy -= 1./r;
-//			}
-//		}
-//		double dvx = particles[i].vx;
-//		double dvy = particles[i].vy;
-//		double dvz = particles[i].vz;
-//		energy += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
-//	}
-//	double dif = abs(energy-energy_best)/(double)N;
-	printf("difference: %e\n",dif);
+	double energy_best = 0;
+	for (int i=0;i<N;i++){
+		for (int j=0;j<N;j++){
+			if (i<j){
+				double dx = pos[3*i+0] - pos[3*j+0];
+				double dy = pos[3*i+1] - pos[3*j+1];
+				double dz = pos[3*i+2] - pos[3*j+2];
+				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+				energy_best -= 1./r;
+			}
+		}
+		double dvx = vel[3*i+0];
+		double dvy = vel[3*i+1];
+		double dvz = vel[3*i+2];
+		energy_best += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
+	}
+	double energy = 0;
+	for (int i=0;i<N;i++){
+		for (int j=0;j<N;j++){
+			if (i<j){
+				double dx = particles[i].x - particles[j].x;
+				double dy = particles[i].y - particles[j].y;
+				double dz = particles[i].z - particles[j].z;
+				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+				energy -= 1./r;
+			}
+		}
+		double dvx = particles[i].vx;
+		double dvy = particles[i].vy;
+		double dvz = particles[i].vz;
+		energy += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
+	}
+	double dif_energy = fabs(energy-energy_best)/(double)N;
 	FILE* of = fopen("error.txt","a+"); 
-	fprintf(of,"%e\t%e\n",dt,dif);
+	fprintf(of,"%e\t",dt);
+	fprintf(of,"%e\t",dif_pos);
+	fprintf(of,"%e\t",dif_vel);
+	fprintf(of,"%e\t",dif_energy);
+	fprintf(of,"%e\t",dif_posabs);
+	fprintf(of,"\n");
 	fclose(of);
 }
 

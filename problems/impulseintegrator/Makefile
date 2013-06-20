@@ -10,7 +10,7 @@ all:
 	ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_open.c ../../src/boundaries.c
 	#ln -fs integrator_leapfrog.c ../../src/integrator.c
-	#ln -fs ../$(PROBLEMDIR)/integrator_impulse2ndorder.c ../../src/integrator.c
+	#ln -fs ../$(PROBLEMDIR)/integrator_impulse.c ../../src/integrator.c
 	ln -fs integrator_leapfrog.c ../../src/integrator.c
 	#ln -fs integrator_radau15.c ../../src/integrator.c
 	# Setup link to problem file
@@ -42,18 +42,23 @@ test:
 	./nbody --dt=1
 	./nbody --dt=0.5
 	./nbody --dt=0.25
+	./nbody --dt=0.125
 	./nbody --dt=0.1
 	./nbody --dt=0.05
 	./nbody --dt=0.025
+	./nbody --dt=0.0125
 	./nbody --dt=0.01
 	./nbody --dt=0.005
 	./nbody --dt=0.0025
+	./nbody --dt=0.00125
 	./nbody --dt=0.001
 	./nbody --dt=0.0005
 	./nbody --dt=0.00025
+	./nbody --dt=0.000125
 	./nbody --dt=0.0001
 	./nbody --dt=0.00005
 	./nbody --dt=0.000025
+	./nbody --dt=0.0000125
 	./nbody --dt=0.00001
 
 clean:
