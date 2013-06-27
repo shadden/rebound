@@ -42,7 +42,6 @@
 
 extern int Nmax;
 int writeBest; 
-double relativev = 1;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -50,28 +49,23 @@ void problem_init(int argc, char* argv[]){
 	softening 	= 0.0;		
 	dt		= input_get_double(argc,argv,"dt",0.0001);
 	writeBest	= input_get_int(argc,argv,"write",0);
-	relativev	= input_get_double(argc,argv,"v",100);
 
-	int _N = 1;
-	boxsize 	= _N*3+relativev;
+	boxsize 	= 10;
 	tmax		= 1;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
 	
+	int _N = 100;
 	for (int i=0;i<_N;i++){
 		struct particle star;
-		star.m = 1;
-		star.x = 0.5*relativev+2.*(double)(i)-(double)_N+1;
-		star.y = 1;
-		star.z = 0;
-		star.vx = -relativev;
-		star.vy = 0;
-		star.vz = 0;
-		particles_add(star);
-		star.vx *= -1;
-		star.x *= -1;
-		star.y *= -1;
+		double r = powf(powf(tools_uniform(0,1),-2./3.)-1.,-1./2.);
+		double x2 = tools_uniform(0,1);
+		double x3 = tools_uniform(0,2.*M_PI);
+		star.z = (1.-2.*x2)*r;
+		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
+		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
+
 		particles_add(star);
 
 	}
@@ -169,7 +163,6 @@ void calculate_error(){
 	fprintf(of,"%e\t",dif_vel);
 	fprintf(of,"%e\t",dif_energy);
 	fprintf(of,"%e\t",dif_posabs);
-	fprintf(of,"%e\t",relativev);
 	fprintf(of,"\n");
 	fclose(of);
 	FILE* ofp = fopen("position.txt","a+"); 
