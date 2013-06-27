@@ -58,8 +58,11 @@ void integrator_part1(){
 	int iterations_N_max = 15;
 	double iterations_epsx = 1e-10;
 	double iterations_epsv = 1e-14;
+#ifdef INTEGRATOR_IMPULSE2NDORDER
 	oddeven = !oddeven; 	// second order
-	//oddeven=1;		// first order
+#else
+	oddeven=1;		// first order
+#endif
 	if (oddeven==0){
 		// x prime
 		for (int i=0;i<N;i++){

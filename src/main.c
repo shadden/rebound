@@ -194,7 +194,14 @@ void iterate(){
 	exit_simulation = _exit_simulation;
 #endif // MPI
 	// @TODO: Adjust timestep so that t==tmax exaclty at the end.
-	if((t+dt>tmax && tmax!=0.0) || exit_simulation==1){
+	double _dtnow  = t-tmax;
+	double _dtnext = t+dt-tmax;
+	if (_dtnext>0.){
+		if (-_dtnow<=_dtnext){
+			exit_simulation=1;
+		}
+	}
+	if((t>tmax && tmax!=0.0) || exit_simulation==1){
 #ifdef GRAVITY_GRAPE
 		gravity_finish();
 #endif // GRAVITY_GRAPE

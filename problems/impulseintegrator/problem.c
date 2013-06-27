@@ -42,63 +42,39 @@
 
 extern int Nmax;
 int writeBest; 
+double relativev = 1;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	softening 	= 0.01;		
+	softening 	= 0.0;		
 	dt		= input_get_double(argc,argv,"dt",0.0001);
-	writeBest		= input_get_int(argc,argv,"write",0);
-	boxsize 	= 100;
+	writeBest	= input_get_int(argc,argv,"write",0);
+	relativev	= input_get_double(argc,argv,"v",100);
+
+	int _N = 1;
+	boxsize 	= _N*3+relativev;
 	tmax		= 1;
 	root_nx = 1; root_ny = 1; root_nz = 1;
 	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
 	
-	/**
-	 * This function sets up a Plummer sphere.
-	 * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
-	 * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
-	 * @param _N Number of particles in the plummer sphere.
-	 * @param mlow Lower mass fraction cutoff (can be 0).
-	 * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
-	 * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
-	 * @param scale Scales the final model before adding it to the simulation.
-	 * @param shift Shift the entire sphere in position and velocity space (6 values). 
-	 */
-	//double shift[6] = {0,0,0,0,0,0};
-	srand(0);
-	//tools_init_plummer(100, 0., 1, 0, 1, shift);
-	int totalN = 100;
-	do{
+	for (int i=0;i<_N;i++){
 		struct particle star;
 		star.m = 1;
-		double r = tools_uniform(0,1) ;
-		double _r;
-		do{
-			star.x = tools_uniform(-1,1);
-			star.y = tools_uniform(-1,1);
-			star.z = tools_uniform(-1,1);
-			_r = sqrt(star.x*star.x + star.y*star.y  + star.z*star.z);
-		}while(_r>1.);
-		star.x *= r/_r;
-		star.y *= r/_r;
-		star.z *= r/_r;
-	
-		double _v;	
-		do{
-			star.vx = tools_uniform(-1,1);
-			star.vy = tools_uniform(-1,1);
-			star.vz = tools_uniform(-1,1);
-			_v = sqrt(star.vx*star.vx + star.vy*star.vy  + star.vz*star.vz);
-		}while(_v>1.);
-		double v = 0.1*sqrt(2.*(double)totalN/r);
-		star.vx *= v/_v;
-		star.vy *= v/_v;
-		star.vz *= v/_v;
-		
+		star.x = 0.5*relativev+2.*(double)(i)-(double)_N+1;
+		star.y = 1;
+		star.z = 0;
+		star.vx = -relativev;
+		star.vy = 0;
+		star.vz = 0;
 		particles_add(star);
-	}while(N<totalN);
+		star.vx *= -1;
+		star.x *= -1;
+		star.y *= -1;
+		particles_add(star);
+
+	}
 
 	double v = 0;
 	for (int i=0;i<N;i++){
@@ -121,73 +97,85 @@ void problem_output(){
 	if (output_check(10.0*dt)) output_timing();
 }
 
+double calculate_energy(struct particle* _particles, int _N){
+	double energy = 0;
+	for (int i=0;i<_N;i++){
+		for (int j=0;j<i;j++){
+			double dx = _particles[i].x - particles[j].x;
+			double dy = _particles[i].y - particles[j].y;
+			double dz = _particles[i].z - particles[j].z;
+			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+			energy += -G*_particles[i].m*_particles[j].m/r;
+		}
+		double dvx = _particles[i].vx;
+		double dvy = _particles[i].vy;
+		double dvz = _particles[i].vz;
+		energy += 1./2. * _particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
+	}
+	return energy;
+}
+
 
 void calculate_error(){
 	FILE* inf = fopen("best.bin","rb"); 
-	double* pos = malloc(3*N*sizeof(double));
-	double* vel = malloc(3*N*sizeof(double));
-	for (int i=0;i<N;i++){
-		fread(&(pos[3*i]),sizeof(double)*3,1,inf);
-		fread(&(vel[3*i]),sizeof(double)*3,1,inf);
+	int _N;
+	double _t;
+	fread(&_N,sizeof(int),1,inf);
+	fread(&_t,sizeof(double),1,inf);
+	struct particle* _particles = malloc(_N*sizeof(struct particle));
+	for (int i=0;i<_N;i++){
+		fread(&(_particles[i]),sizeof(struct particle),1,inf);
 	}
 	fclose(inf);
 	double dif_pos = 0;
 	double dif_posabs = 0;
 	double dif_vel = 0;
 	for (int i=0;i<N;i++){
-		double dx = pos[3*i+0] - particles[i].x;
-		double dy = pos[3*i+1] - particles[i].y;
-		double dz = pos[3*i+2] - particles[i].z;
+		double dx = _particles[i].x - particles[i].x;
+		double dy = _particles[i].y - particles[i].y;
+		double dz = _particles[i].z - particles[i].z;
 		dif_pos += sqrt(dx*dx + dy*dy + dz*dz )/(double)N;
 		dif_posabs += fabs(dx)/(double)N;
 		dif_posabs += fabs(dy)/(double)N;
 		dif_posabs += fabs(dz)/(double)N;
-		double dvx = vel[3*i+0] - particles[i].vx;
-		double dvy = vel[3*i+1] - particles[i].vy;
-		double dvz = vel[3*i+2] - particles[i].vz;
+		double dvx = _particles[i].vx - particles[i].vx;
+		double dvy = _particles[i].vy - particles[i].vy;
+		double dvz = _particles[i].vz - particles[i].vz;
 		dif_vel += sqrt(dvx*dvx + dvy*dvy + dvz*dvz )/(double)N;
 	}
-	double energy_best = 0;
-	for (int i=0;i<N;i++){
-		for (int j=0;j<N;j++){
-			if (i<j){
-				double dx = pos[3*i+0] - pos[3*j+0];
-				double dy = pos[3*i+1] - pos[3*j+1];
-				double dz = pos[3*i+2] - pos[3*j+2];
-				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-				energy_best -= 1./r;
-			}
-		}
-		double dvx = vel[3*i+0];
-		double dvy = vel[3*i+1];
-		double dvz = vel[3*i+2];
-		energy_best += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
-	}
-	double energy = 0;
-	for (int i=0;i<N;i++){
-		for (int j=0;j<N;j++){
-			if (i<j){
-				double dx = particles[i].x - particles[j].x;
-				double dy = particles[i].y - particles[j].y;
-				double dz = particles[i].z - particles[j].z;
-				double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-				energy -= 1./r;
-			}
-		}
-		double dvx = particles[i].vx;
-		double dvy = particles[i].vy;
-		double dvz = particles[i].vz;
-		energy += 1./2. * (dvx*dvx + dvy*dvy + dvz*dvz);
-	}
-	double dif_energy = fabs(energy-energy_best)/(double)N;
-	FILE* of = fopen("error.txt","a+"); 
+	double energy_best = calculate_energy(_particles,_N);
+	double energy      = calculate_energy(particles,N);
+	double dif_energy = fabs((energy-energy_best)/energy_best);
+#ifdef INTEGRATOR_LEAPFROG
+	FILE* of = fopen("error_leapfrog.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_EULER
+	FILE* of = fopen("error_euler.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_MODIFIEDEULER
+	FILE* of = fopen("error_modifiedeuler.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_RADAU15
+	FILE* of = fopen("error_radau15.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_IMPULSE
+	FILE* of = fopen("error_impulse.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_IMPULSE2NDORDER
+	FILE* of = fopen("error_impulse2ndorder.txt","a+"); 
+#endif
 	fprintf(of,"%e\t",dt);
 	fprintf(of,"%e\t",dif_pos);
 	fprintf(of,"%e\t",dif_vel);
 	fprintf(of,"%e\t",dif_energy);
 	fprintf(of,"%e\t",dif_posabs);
+	fprintf(of,"%e\t",relativev);
 	fprintf(of,"\n");
 	fclose(of);
+	FILE* ofp = fopen("position.txt","a+"); 
+	fprintf(ofp,"%e\t%e\t%e\t%e\n",dt,particles[0].x,particles[0].y,particles[0].z);
+	fclose(ofp);
+	
 }
 
 struct vec3o {
@@ -196,26 +184,11 @@ struct vec3o {
 	double z;
 };
 
-void output_binaryxv(char* filename){
-	FILE* of = fopen(filename,"wb"); 
-	for (int i=0;i<N;i++){
-		struct vec3o v;
-		v.x = particles[i].x;
-		v.y = particles[i].y;
-		v.z = particles[i].z;
-		fwrite(&(v),sizeof(struct vec3o),1,of);
-		v.x = particles[i].vx;
-		v.y = particles[i].vy;
-		v.z = particles[i].vz;
-		fwrite(&(v),sizeof(struct vec3o),1,of);
-	}
-	fclose(of);
-}
 
 void problem_finish(){
-	printf("\nFinished. Time: %f\n",t);
+	printf("\nFinished. Time: %e. Difference to exact time: %e. Timestep: %e\n",t,t-tmax,dt);
 	if (writeBest){
-		output_binaryxv("best.bin");
+		output_binary("best.bin");
 	}
 	calculate_error();
 }
