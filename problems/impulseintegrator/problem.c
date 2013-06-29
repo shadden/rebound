@@ -50,21 +50,45 @@ void problem_init(int argc, char* argv[]){
 	dt		= input_get_double(argc,argv,"dt",0.0001);
 	writeBest	= input_get_int(argc,argv,"write",0);
 
-	boxsize 	= 10;
+	boxsize 	= 100;
 	tmax		= 1;
-	root_nx = 1; root_ny = 1; root_nz = 1;
-	nghostx = 0; nghosty = 0; nghostz = 0; 		
 	init_box();
 	
 	int _N = 100;
+	double M = 1;
+	double E = 1;
 	for (int i=0;i<_N;i++){
 		struct particle star;
-		double r = powf(powf(tools_uniform(0,1),-2./3.)-1.,-1./2.);
+		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
 		double x2 = tools_uniform(0,1);
 		double x3 = tools_uniform(0,2.*M_PI);
 		star.z = (1.-2.*x2)*r;
 		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
 		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
+		double x5,g,q;
+		do{
+			x5 = tools_uniform(0.,1.);
+			q = tools_uniform(0.,1.);
+			g = q*q*pow(1.-q*q,7./2.);
+		}while(0.1*x5>g);
+		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
+		double v = q*ve;
+		double x6 = tools_uniform(0,1);
+		double x7 = tools_uniform(0,2.*M_PI);
+		star.vz = (1.-2.*x6)*v;
+		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
+		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
+		
+		star.x *= 3.*M_PI/64.*M*M/E;
+		star.y *= 3.*M_PI/64.*M*M/E;
+		star.z *= 3.*M_PI/64.*M*M/E;
+		
+		star.vx *= 64./3/M_PI/sqrt(M)*sqrt(E);
+		star.vy *= 64./3/M_PI/sqrt(M)*sqrt(E);
+		star.vz *= 64./3/M_PI/sqrt(M)*sqrt(E);
+
+		star.m = M/(double)_N;
+
 
 		particles_add(star);
 
