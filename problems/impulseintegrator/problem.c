@@ -42,6 +42,7 @@
 
 extern int Nmax;
 int writeBest; 
+double calculate_energy(struct particle* _particles, int _N);
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -51,12 +52,14 @@ void problem_init(int argc, char* argv[]){
 	writeBest	= input_get_int(argc,argv,"write",0);
 
 	boxsize 	= 100;
-	tmax		= 1;
+	tmax		= 100;
 	init_box();
 	
-	int _N = 100;
+	int _N = 1000;
 	double M = 1;
-	double E = 1;
+	double R = 1;
+	double E = 3./64.*M_PI*M*M/R;
+	// http://adsabs.harvard.edu//abs/1974A%26A....37..183A
 	for (int i=0;i<_N;i++){
 		struct particle star;
 		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
@@ -73,8 +76,8 @@ void problem_init(int argc, char* argv[]){
 		}while(0.1*x5>g);
 		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
 		double v = q*ve;
-		double x6 = tools_uniform(0,1);
-		double x7 = tools_uniform(0,2.*M_PI);
+		double x6 = tools_uniform(0.,1.);
+		double x7 = tools_uniform(0.,2.*M_PI);
 		star.vz = (1.-2.*x6)*v;
 		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
 		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
@@ -83,15 +86,14 @@ void problem_init(int argc, char* argv[]){
 		star.y *= 3.*M_PI/64.*M*M/E;
 		star.z *= 3.*M_PI/64.*M*M/E;
 		
-		star.vx *= 64./3/M_PI/sqrt(M)*sqrt(E);
-		star.vy *= 64./3/M_PI/sqrt(M)*sqrt(E);
-		star.vz *= 64./3/M_PI/sqrt(M)*sqrt(E);
+		star.vx *= sqrt(E*64./3./M_PI/M);
+		star.vy *= sqrt(E*64./3./M_PI/M);
+		star.vz *= sqrt(E*64./3./M_PI/M);
 
 		star.m = M/(double)_N;
 
 
 		particles_add(star);
-
 	}
 
 	double v = 0;
@@ -116,21 +118,22 @@ void problem_output(){
 }
 
 double calculate_energy(struct particle* _particles, int _N){
-	double energy = 0;
+	double energy_kinetic = 0;
+	double energy_potential = 0;
 	for (int i=0;i<_N;i++){
 		for (int j=0;j<i;j++){
 			double dx = _particles[i].x - particles[j].x;
 			double dy = _particles[i].y - particles[j].y;
 			double dz = _particles[i].z - particles[j].z;
 			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-			energy += -G*_particles[i].m*_particles[j].m/r;
+			energy_potential += -G*_particles[i].m*_particles[j].m/r;
 		}
 		double dvx = _particles[i].vx;
 		double dvy = _particles[i].vy;
 		double dvz = _particles[i].vz;
-		energy += 1./2. * _particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
+		energy_kinetic += 1./2. * _particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
 	}
-	return energy;
+	return energy_potential + energy_kinetic;
 }
 
 
