@@ -43,22 +43,29 @@
 extern int Nmax;
 int writeBest; 
 double calculate_energy(struct particle* _particles, int _N);
+double t0, r0;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	softening 	= 0.0;		
 	dt		= input_get_double(argc,argv,"dt",0.0001);
 	writeBest	= input_get_int(argc,argv,"write",0);
 
-	boxsize 	= 100;
-	tmax		= 100;
-	init_box();
 	
-	int _N = 1000;
+	int _N = 100;
 	double M = 1;
 	double R = 1;
 	double E = 3./64.*M_PI*M*M/R;
+	r0 = 16./(3.*M_PI)*R;
+	t0 = G*pow(M,5./2.)*pow(4.*E,-3./2.)*(double)_N/log(0.4*(double)_N); //Rellaxation time
+	tmax		= 2.*t0;
+	boxsize 	= 100.*r0;
+	softening 	= 0.01*r0;		
+
+	init_box();
+	
+	
+	
 	// http://adsabs.harvard.edu//abs/1974A%26A....37..183A
 	for (int i=0;i<_N;i++){
 		struct particle star;
@@ -95,26 +102,13 @@ void problem_init(int argc, char* argv[]){
 
 		particles_add(star);
 	}
+	tools_move_to_center_of_momentum();
 
-	double v = 0;
-	for (int i=0;i<N;i++){
-		v += sqrt(particles[i].vx*particles[i].vx + particles[i].vy*particles[i].vy + particles[i].vz*particles[i].vz);
-	}
-	printf("System size: %f\n", 1.);
-	printf("Smoothing length: %f\n", softening);
-	printf("Interparticle separation: %f\n", 1./powf((double)N,1./3.));
-	printf("Characteristic velocity: %f\n", sqrt(G*(double)N*particles[0].m/1.));
-	printf("Mean velocity: %f\n", v/(double)N);
-	printf("Crossing time: %f\n", 1./(v/(double)N));
-	printf("Encounter time: %f\n", 1./(v/(double)N)/powf((double)N,1./3.));
-	printf("Timestep: %f\n", dt);
+	printf("Characteristic size:              %f\n", r0);
+	printf("Characteristic time (relaxation): %f\n", t0);
 }
 
 void problem_inloop(){
-}
-
-void problem_output(){
-	if (output_check(10.0*dt)) output_timing();
 }
 
 double calculate_energy(struct particle* _particles, int _N){
@@ -134,6 +128,40 @@ double calculate_energy(struct particle* _particles, int _N){
 		energy_kinetic += 1./2. * _particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
 	}
 	return energy_potential + energy_kinetic;
+}
+int compare (const void * a, const void * b){
+	if (*(double*)a < *(double*)b ) return -1;
+	if (*(double*)a > *(double*)b ) return 1;
+	return 0;
+}
+
+void output_radii(){
+	tools_move_to_center_of_momentum();
+	double* radii = malloc(sizeof(double)*N);
+	for (int i=0;i<N;i++){
+		double r = sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z);
+		radii[i] = r;
+	}
+	qsort (radii, N, sizeof(double), compare);
+	
+	FILE* of = fopen("radii.txt","a+"); 
+//	fprintf(of,"%e\t",t/t0);
+//	int index10 = (int)ceil(0.1*(double)N);
+//	if (index10>=N) index10 = N-1;
+//	int index50 = (int)ceil(0.5*(double)N);
+//	if (index50>=N) index50 = N-1;
+//	int index90 = (int)ceil(0.9*(double)N);
+//	if (index90>=N) index90 = N-1;
+//	fprintf(of,"%e\t",radii[index10]/r0);
+//	fprintf(of,"%e\t",radii[index50]/r0);
+//	fprintf(of,"%e\t",radii[index90]/r0);
+	
+	for (int i=0;i<N;i++){
+		fprintf(of,"%e\t%d\t%e\n",t/t0,i,radii[i]/r0);
+	}
+	fprintf(of,"\n");
+
+	fclose(of);
 }
 
 
@@ -212,3 +240,8 @@ void problem_finish(){
 	}
 	calculate_error();
 }
+void problem_output(){
+	if (output_check(10.0*dt)) output_timing();
+	if (output_check(tmax/1000.)) output_radii();
+}
+
