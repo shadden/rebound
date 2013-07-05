@@ -60,7 +60,7 @@ void problem_init(int argc, char* argv[]){
 	t0 = G*pow(M,5./2.)*pow(4.*E,-3./2.)*(double)_N/log(0.4*(double)_N); //Rellaxation time
 	tmax		= 2.*t0;
 	boxsize 	= 100.*r0;
-	softening 	= 0.01*r0;		
+	softening 	= 0.0001*r0;		
 
 	init_box();
 	
@@ -145,22 +145,22 @@ void output_radii(){
 	qsort (radii, N, sizeof(double), compare);
 	
 	FILE* of = fopen("radii.txt","a+"); 
-//	fprintf(of,"%e\t",t/t0);
-//	int index10 = (int)ceil(0.1*(double)N);
-//	if (index10>=N) index10 = N-1;
-//	int index50 = (int)ceil(0.5*(double)N);
-//	if (index50>=N) index50 = N-1;
-//	int index90 = (int)ceil(0.9*(double)N);
-//	if (index90>=N) index90 = N-1;
-//	fprintf(of,"%e\t",radii[index10]/r0);
-//	fprintf(of,"%e\t",radii[index50]/r0);
-//	fprintf(of,"%e\t",radii[index90]/r0);
+	fprintf(of,"%e\t",t/t0);
+	int index10 = (int)ceil(0.1*(double)N);
+	if (index10>=N) index10 = N-1;
+	int index50 = (int)ceil(0.5*(double)N);
+	if (index50>=N) index50 = N-1;
+	int index90 = (int)ceil(0.9*(double)N);
+	if (index90>=N) index90 = N-1;
+	fprintf(of,"%e\t",radii[index10]/r0);
+	fprintf(of,"%e\t",radii[index50]/r0);
+	fprintf(of,"%e\t",radii[index90]/r0);
 	
-	for (int i=0;i<N;i++){
-		fprintf(of,"%e\t%d\t%e\n",t/t0,i,radii[i]/r0);
-	}
-	fprintf(of,"\n");
+//	for (int i=0;i<N;i++){
+//		fprintf(of,"%e\t%d\t%e\n",t/t0,i,radii[i]/r0);
+//	}
 
+	fprintf(of,"\n");
 	fclose(of);
 }
 
