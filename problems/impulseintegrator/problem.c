@@ -110,15 +110,36 @@ void problem_init(int argc, char* argv[]){
 
 void problem_inloop(){
 }
+double calculate_mininteractiontime(){
+	double mininteractiontime = 1e12;
+	for (int i=0;i<N;i++){
+		for (int j=0;j<i;j++){
+			double dx = particles[i].x - particles[j].x;
+			double dy = particles[i].y - particles[j].y;
+			double dz = particles[i].z - particles[j].z;
+			double r = sqrt(dx*dx + dy*dy + dz*dz);
+			double dvx = particles[i].vx - particles[j].vx;
+			double dvy = particles[i].vy - particles[j].vy;
+			double dvz = particles[i].vz - particles[j].vz;
+			double v = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+			double interactiontime = fabs(r/v);
+			if (interactiontime<mininteractiontime){
+				mininteractiontime = interactiontime;
+			}
+		}
+	}
+	return mininteractiontime;
+}
+
 
 double calculate_energy(struct particle* _particles, int _N){
 	double energy_kinetic = 0;
 	double energy_potential = 0;
 	for (int i=0;i<_N;i++){
 		for (int j=0;j<i;j++){
-			double dx = _particles[i].x - particles[j].x;
-			double dy = _particles[i].y - particles[j].y;
-			double dz = _particles[i].z - particles[j].z;
+			double dx = _particles[i].x - _particles[j].x;
+			double dy = _particles[i].y - _particles[j].y;
+			double dz = _particles[i].z - _particles[j].z;
 			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
 			energy_potential += -G*_particles[i].m*_particles[j].m/r;
 		}
@@ -241,6 +262,7 @@ void problem_finish(){
 	calculate_error();
 }
 void problem_output(){
+	//printf("Min interaction time: %e\n",calculate_mininteractiontime());
 	if (output_check(10.0*dt)) output_timing();
 	if (output_check(tmax/1000.)) output_radii();
 }
