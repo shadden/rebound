@@ -43,6 +43,7 @@
 extern int Nmax;
 int writeBest; 
 double calculate_energy(struct particle* _particles, int _N);
+void output_statistics();
 double t0, r0;
 
 void problem_init(int argc, char* argv[]){
@@ -52,60 +53,25 @@ void problem_init(int argc, char* argv[]){
 	writeBest	= input_get_int(argc,argv,"write",0);
 
 	
-	int _N = 100;
+	int _N 		= input_get_int(argc,argv,"N",4096);
 	double M = 1;
-	double R = 1;
-	double E = 3./64.*M_PI*M*M/R;
-	r0 = 16./(3.*M_PI)*R;
+	double R = 64./3./M_PI;
+	double E = 1;
+	r0 = 16./(3.*M_PI)*R;	// 1.6976527 * R
 	t0 = G*pow(M,5./2.)*pow(4.*E,-3./2.)*(double)_N/log(0.4*(double)_N); //Rellaxation time
 	tmax		= 2.*t0;
 	boxsize 	= 100.*r0;
-	softening 	= 0.0001*r0;		
+	softening 	= 0.025;		
 
 	init_box();
 	
 	
 	
-	// http://adsabs.harvard.edu//abs/1974A%26A....37..183A
-	for (int i=0;i<_N;i++){
-		struct particle star;
-		double r = pow(pow(tools_uniform(0,1),-2./3.)-1.,-1./2.);
-		double x2 = tools_uniform(0,1);
-		double x3 = tools_uniform(0,2.*M_PI);
-		star.z = (1.-2.*x2)*r;
-		star.x = sqrt(r*r-star.z*star.z)*cos(x3);
-		star.y = sqrt(r*r-star.z*star.z)*sin(x3);
-		double x5,g,q;
-		do{
-			x5 = tools_uniform(0.,1.);
-			q = tools_uniform(0.,1.);
-			g = q*q*pow(1.-q*q,7./2.);
-		}while(0.1*x5>g);
-		double ve = pow(2.,1./2.)*pow(1.+r*r,-1./4.);
-		double v = q*ve;
-		double x6 = tools_uniform(0.,1.);
-		double x7 = tools_uniform(0.,2.*M_PI);
-		star.vz = (1.-2.*x6)*v;
-		star.vx = sqrt(v*v-star.vz*star.vz)*cos(x7);
-		star.vy = sqrt(v*v-star.vz*star.vz)*sin(x7);
-		
-		star.x *= 3.*M_PI/64.*M*M/E;
-		star.y *= 3.*M_PI/64.*M*M/E;
-		star.z *= 3.*M_PI/64.*M*M/E;
-		
-		star.vx *= sqrt(E*64./3./M_PI/M);
-		star.vy *= sqrt(E*64./3./M_PI/M);
-		star.vz *= sqrt(E*64./3./M_PI/M);
-
-		star.m = M/(double)_N;
-
-
-		particles_add(star);
-	}
+	tools_init_plummer(_N, M, R);
 	tools_move_to_center_of_momentum();
 
-	printf("Characteristic size:              %f\n", r0);
-	printf("Characteristic time (relaxation): %f\n", t0);
+	output_statistics();
+	exit(1);
 }
 
 void problem_inloop(){
@@ -131,6 +97,60 @@ double calculate_mininteractiontime(){
 	return mininteractiontime;
 }
 
+struct vec3 {
+	double x;
+	double y;
+	double z;
+};
+
+void output_statistics(){
+	printf("\n\n");
+	printf("\t Number of particles: \t%d\n",N);
+	double mass = 0;
+	for (int i=0;i<N;i++){
+		mass += particles[i].m;
+	}
+	printf("\t Total mass:           \t%e\n",mass);
+	// Algorithm with reduced roundoff errors (see wikipedia)
+	struct vec3 A = {.x=0, .y=0, .z=0};
+	struct vec3 Q = {.x=0, .y=0, .z=0};
+	for (int i=0;i<N;i++){
+		struct vec3 Aim1 = A;
+		struct particle p = particles[i];
+		A.x = A.x + (p.vx-A.x)/(double)(i+1);
+		A.y = A.y + (p.vy-A.y)/(double)(i+1);
+		A.z = A.z + (p.vz-A.z)/(double)(i+1);
+		Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
+		Q.y = Q.y + (p.vy-Aim1.y)*(p.vy-A.y);
+		Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
+	}
+	Q.x = sqrt(Q.x/(double)N);
+	Q.y = sqrt(Q.y/(double)N);
+	Q.z = sqrt(Q.z/(double)N);
+	double totQ = sqrt(Q.x*Q.x + Q.y*Q.y + Q.z*Q.z);
+	printf("\t Velocity dispersion: \t%e\n",totQ);
+
+	double energy_kinetic = 0;
+	double energy_potential = 0;
+	for (int i=0;i<N;i++){
+		for (int j=0;j<i;j++){
+			double dx = particles[i].x - particles[j].x;
+			double dy = particles[i].y - particles[j].y;
+			double dz = particles[i].z - particles[j].z;
+			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+			energy_potential += -G*particles[i].m*particles[j].m/r;
+		}
+		double dvx = particles[i].vx;
+		double dvy = particles[i].vy;
+		double dvz = particles[i].vz;
+		energy_kinetic += 1./2. * particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
+	}
+	
+	printf("\t Energy (kinetic): \t%e\n",energy_kinetic);
+	printf("\t Energy (potential): \t%e\n",energy_potential);
+	printf("\t Energy (total): \t%e\n",energy_potential+energy_kinetic);
+	printf("\n\n");
+}
 
 double calculate_energy(struct particle* _particles, int _N){
 	double energy_kinetic = 0;
