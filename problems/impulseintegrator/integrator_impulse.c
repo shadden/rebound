@@ -65,6 +65,7 @@ void integrator_part1(){
 #endif
 	if (oddeven==0){
 		// x prime
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			// Initial guess
 			xp[i].x = particles[i].x+dt*particles[i].vx;
@@ -72,6 +73,7 @@ void integrator_part1(){
 			xp[i].z = particles[i].z+dt*particles[i].vz;
 		}
 		for (int iterations=0; iterations<iterations_N_max; iterations++){
+#pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				xpp[i].x = particles[i].x+dt*particles[i].vx;
 				xpp[i].y = particles[i].y+dt*particles[i].vy;
@@ -140,6 +142,7 @@ void integrator_part1(){
 				}
 			}
 			double dif = 0;
+#pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				// Ready for next iteration;
 				double dx = xp[i].x-xpp[i].x;	
@@ -156,6 +159,7 @@ void integrator_part1(){
 		}
 
 		// v prime
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			vp[i].x = particles[i].vx;
 			vp[i].y = particles[i].vy;
@@ -198,6 +202,7 @@ void integrator_part1(){
 							
 		
 		// Set variables for next iteration;
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			particles[i].x   = xp[i].x;
 			particles[i].y   = xp[i].y;
@@ -207,6 +212,7 @@ void integrator_part1(){
 			particles[i].vz  = vp[i].z;
 		}
 	}else{
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			// Initial guess
 			vp[i].x = particles[i].vx;
@@ -214,6 +220,7 @@ void integrator_part1(){
 			vp[i].z = particles[i].vz;
 		}
 		for (int iterations=0; iterations<iterations_N_max; iterations++){
+#pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				vpp[i].x = particles[i].vx;
 				vpp[i].y = particles[i].vy;
@@ -259,6 +266,7 @@ void integrator_part1(){
 				}
 			}
 			double dif = 0;
+#pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				// Ready for next iteration;
 				double dx = vp[i].x-vpp[i].x;	
@@ -274,6 +282,7 @@ void integrator_part1(){
 			}
 		}
 		// x prime
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			xp[i].x = particles[i].x + dt*vp[i].x;
 			xp[i].y = particles[i].y + dt*vp[i].y;
@@ -339,6 +348,7 @@ void integrator_part1(){
 		}
 
 		// Set variables for next iteration;
+#pragma omp parallel for schedule(guided)
 		for (int i=0;i<N;i++){
 			particles[i].x   = xp[i].x;
 			particles[i].y   = xp[i].y;

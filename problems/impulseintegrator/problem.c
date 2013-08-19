@@ -102,6 +102,11 @@ struct vec3 {
 	double y;
 	double z;
 };
+int compare (const void * a, const void * b){
+	if (*(double*)a < *(double*)b ) return -1;
+	if (*(double*)a > *(double*)b ) return 1;
+	return 0;
+}
 
 void output_statistics(){
 	printf("\n\n");
@@ -150,7 +155,21 @@ void output_statistics(){
 	printf("\t Energy (kinetic): \t%e\n",energy_kinetic);
 	printf("\t Energy (potential): \t%e\n",energy_potential);
 	printf("\t Energy (total): \t%e\n",energy_potential+energy_kinetic);
+	
+	double* radii = malloc(sizeof(double)*N);
+	for (int i=0;i<N;i++){
+		double r = sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z);
+		radii[i] = r;
+	}
+	qsort (radii, N, sizeof(double), compare);
+	int index50 = (int)ceil(0.5*(double)N);
+	printf("\t Radius containing 50%%:\t%e\n",radii[index50]);
+	
+	
+	printf("\t Timestep:          \t%e\n",dt);
 	printf("\n\n");
+
+
 	
 	FILE* of = fopen("ascii.txt","a+"); 
 	fprintf(of,"%e\t",t);
@@ -161,11 +180,6 @@ void output_statistics(){
 	
 }
 
-int compare (const void * a, const void * b){
-	if (*(double*)a < *(double*)b ) return -1;
-	if (*(double*)a > *(double*)b ) return 1;
-	return 0;
-}
 
 void output_radii(){
 	tools_move_to_center_of_momentum();
