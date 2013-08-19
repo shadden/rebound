@@ -44,24 +44,24 @@ extern int Nmax;
 int writeBest; 
 double calculate_energy(struct particle* _particles, int _N);
 void output_statistics();
-double t0, r0;
+extern double opening_angle2; /**< Square of the cell opening angle \f$ \theta \f$. */
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
-	dt		= input_get_double(argc,argv,"dt",0.0001);
+	dt		= input_get_double(argc,argv,"dt",1./48.);
 	writeBest	= input_get_int(argc,argv,"write",0);
 
 	
 	int _N 		= input_get_int(argc,argv,"N",4096);
-	double M = 1;
-	double R = 64./3./M_PI;
-	double E = 1;
-	r0 = 16./(3.*M_PI)*R;	// 1.6976527 * R
-	t0 = G*pow(M,5./2.)*pow(4.*E,-3./2.)*(double)_N/log(0.4*(double)_N); //Rellaxation time
-	tmax		= 2.*t0;
-	boxsize 	= 100.*r0;
+	double M 	= 1;
+	double R 	= 3./64.*M_PI;  // --> Energy = 1
+	tmax		= 8;
+	boxsize 	= 200.*R;
 	softening 	= 0.025;		
+#ifdef TREE
+	opening_angle2	= 1;
+#endif
 
 	init_box();
 	
@@ -70,8 +70,8 @@ void problem_init(int argc, char* argv[]){
 	tools_init_plummer(_N, M, R);
 	tools_move_to_center_of_momentum();
 
-	output_statistics();
-	exit(1);
+	system("rm -v ascii.txt");
+	system("rm -v E4E8.txt");
 }
 
 void problem_inloop(){
@@ -132,6 +132,7 @@ void output_statistics(){
 
 	double energy_kinetic = 0;
 	double energy_potential = 0;
+#pragma omp parallel for reduction(+:energy_potential) reduction(+:energy_kinetic) schedule(guided)
 	for (int i=0;i<N;i++){
 		for (int j=0;j<i;j++){
 			double dx = particles[i].x - particles[j].x;
@@ -150,26 +151,16 @@ void output_statistics(){
 	printf("\t Energy (potential): \t%e\n",energy_potential);
 	printf("\t Energy (total): \t%e\n",energy_potential+energy_kinetic);
 	printf("\n\n");
+	
+	FILE* of = fopen("ascii.txt","a+"); 
+	fprintf(of,"%e\t",t);
+	fprintf(of,"%e\t",energy_kinetic);
+	fprintf(of,"%e\t",energy_potential);
+	fprintf(of,"\n");
+	fclose(of);
+	
 }
 
-double calculate_energy(struct particle* _particles, int _N){
-	double energy_kinetic = 0;
-	double energy_potential = 0;
-	for (int i=0;i<_N;i++){
-		for (int j=0;j<i;j++){
-			double dx = _particles[i].x - _particles[j].x;
-			double dy = _particles[i].y - _particles[j].y;
-			double dz = _particles[i].z - _particles[j].z;
-			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
-			energy_potential += -G*_particles[i].m*_particles[j].m/r;
-		}
-		double dvx = _particles[i].vx;
-		double dvy = _particles[i].vy;
-		double dvz = _particles[i].vz;
-		energy_kinetic += 1./2. * _particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
-	}
-	return energy_potential + energy_kinetic;
-}
 int compare (const void * a, const void * b){
 	if (*(double*)a < *(double*)b ) return -1;
 	if (*(double*)a > *(double*)b ) return 1;
@@ -186,16 +177,16 @@ void output_radii(){
 	qsort (radii, N, sizeof(double), compare);
 	
 	FILE* of = fopen("radii.txt","a+"); 
-	fprintf(of,"%e\t",t/t0);
+	fprintf(of,"%e\t",t);
 	int index10 = (int)ceil(0.1*(double)N);
 	if (index10>=N) index10 = N-1;
 	int index50 = (int)ceil(0.5*(double)N);
 	if (index50>=N) index50 = N-1;
 	int index90 = (int)ceil(0.9*(double)N);
 	if (index90>=N) index90 = N-1;
-	fprintf(of,"%e\t",radii[index10]/r0);
-	fprintf(of,"%e\t",radii[index50]/r0);
-	fprintf(of,"%e\t",radii[index90]/r0);
+	fprintf(of,"%e\t",radii[index10]);
+	fprintf(of,"%e\t",radii[index50]);
+	fprintf(of,"%e\t",radii[index90]);
 	
 //	for (int i=0;i<N;i++){
 //		fprintf(of,"%e\t%d\t%e\n",t/t0,i,radii[i]/r0);
@@ -206,84 +197,70 @@ void output_radii(){
 }
 
 
-void calculate_error(){
-	FILE* inf = fopen("best.bin","rb"); 
-	int _N;
-	double _t;
-	fread(&_N,sizeof(int),1,inf);
-	fread(&_t,sizeof(double),1,inf);
-	struct particle* _particles = malloc(_N*sizeof(struct particle));
-	for (int i=0;i<_N;i++){
-		fread(&(_particles[i]),sizeof(struct particle),1,inf);
-	}
-	fclose(inf);
-	double dif_pos = 0;
-	double dif_posabs = 0;
-	double dif_vel = 0;
-	for (int i=0;i<N;i++){
-		double dx = _particles[i].x - particles[i].x;
-		double dy = _particles[i].y - particles[i].y;
-		double dz = _particles[i].z - particles[i].z;
-		dif_pos += sqrt(dx*dx + dy*dy + dz*dz )/(double)N;
-		dif_posabs += fabs(dx)/(double)N;
-		dif_posabs += fabs(dy)/(double)N;
-		dif_posabs += fabs(dz)/(double)N;
-		double dvx = _particles[i].vx - particles[i].vx;
-		double dvy = _particles[i].vy - particles[i].vy;
-		double dvz = _particles[i].vz - particles[i].vz;
-		dif_vel += sqrt(dvx*dvx + dvy*dvy + dvz*dvz )/(double)N;
-	}
-	double energy_best = calculate_energy(_particles,_N);
-	double energy      = calculate_energy(particles,N);
-	double dif_energy = fabs((energy-energy_best)/energy_best);
-#ifdef INTEGRATOR_LEAPFROG
-	FILE* of = fopen("error_leapfrog.txt","a+"); 
-#endif
-#ifdef INTEGRATOR_EULER
-	FILE* of = fopen("error_euler.txt","a+"); 
-#endif
-#ifdef INTEGRATOR_MODIFIEDEULER
-	FILE* of = fopen("error_modifiedeuler.txt","a+"); 
-#endif
-#ifdef INTEGRATOR_RADAU15
-	FILE* of = fopen("error_radau15.txt","a+"); 
-#endif
-#ifdef INTEGRATOR_IMPULSE
-	FILE* of = fopen("error_impulse.txt","a+"); 
-#endif
-#ifdef INTEGRATOR_IMPULSE2NDORDER
-	FILE* of = fopen("error_impulse2ndorder.txt","a+"); 
-#endif
-	fprintf(of,"%e\t",dt);
-	fprintf(of,"%e\t",dif_pos);
-	fprintf(of,"%e\t",dif_vel);
-	fprintf(of,"%e\t",dif_energy);
-	fprintf(of,"%e\t",dif_posabs);
-	fprintf(of,"\n");
-	fclose(of);
-	FILE* ofp = fopen("position.txt","a+"); 
-	fprintf(ofp,"%e\t%e\t%e\t%e\n",dt,particles[0].x,particles[0].y,particles[0].z);
-	fclose(ofp);
-	
-}
-
 struct vec3o {
 	double x;
 	double y;
 	double z;
 };
 
+void output_E4E8(){
+	FILE* of = fopen("E4E8.txt","a+"); 
+	for (int i=0;i<N;i++){
+		double energy_potential = 0;
+		double energy_kinetic = 0;
+		for (int j=0;j<N;j++){
+			if (i==j) continue;
+			double dx = particles[i].x - particles[j].x;
+			double dy = particles[i].y - particles[j].y;
+			double dz = particles[i].z - particles[j].z;
+			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+			energy_potential += -G*particles[i].m*particles[j].m/r;
+		}
+		double dvx = particles[i].vx;
+		double dvy = particles[i].vy;
+		double dvz = particles[i].vz;
+		energy_kinetic += 1./2. * particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
+		fprintf(of,"%e\t%e\n",particles[i].E4,energy_kinetic + energy_potential);
+	}
+	fclose(of);
+}
 
 void problem_finish(){
 	printf("\nFinished. Time: %e. Difference to exact time: %e. Timestep: %e\n",t,t-tmax,dt);
 	if (writeBest){
 		output_binary("best.bin");
 	}
-	calculate_error();
+	output_E4E8();
 }
+
+void set_E4(){
+#pragma omp parallel for schedule(guided)
+	for (int i=0;i<N;i++){
+		double energy_potential = 0;
+		double energy_kinetic = 0;
+		for (int j=0;j<N;j++){
+			if (i==j) continue;
+			double dx = particles[i].x - particles[j].x;
+			double dy = particles[i].y - particles[j].y;
+			double dz = particles[i].z - particles[j].z;
+			double r = sqrt(dx*dx + dy*dy + dz*dz + softening*softening);
+			energy_potential += -G*particles[i].m*particles[j].m/r;
+		}
+		double dvx = particles[i].vx;
+		double dvy = particles[i].vy;
+		double dvz = particles[i].vz;
+		energy_kinetic += 1./2. * particles[i].m* (dvx*dvx + dvy*dvy + dvz*dvz);
+		particles[i].E4 = energy_kinetic + energy_potential;
+	}
+}
+
 void problem_output(){
 	//printf("Min interaction time: %e\n",calculate_mininteractiontime());
-	if (output_check(10.0*dt)) output_timing();
-	if (output_check(tmax/1000.)) output_radii();
+	output_timing();
+	if (t<=4.&& t+dt>4.){
+		set_E4();
+	}
+	if (output_check(tmax)) output_statistics();
+//#	if (output_check(tmax/1000.)) output_radii();
 }
 

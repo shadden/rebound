@@ -1,6 +1,7 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=1
 export OPT=-O3
+export CC=gcc -fopenmp
 export QUADRUPOLE=0
 export MPI=0
 
@@ -30,6 +31,7 @@ impulse2ndorder:
 
 leapfrog:
 	# Setup link to different modules
+	#ln -fs gravity_tree.c ../../src/gravity.c
 	ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_open.c ../../src/boundaries.c
 	ln -fs collisions_none.c ../../src/collisions.c
