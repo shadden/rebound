@@ -331,7 +331,7 @@ int integrator_radau_step() {
 		}
 		// Do not change timestep if all accelerations equal to zero.
 		if  (error>0.0){
-			double dt_new = pow(integrator_epsilon/error,1./15.)*dt_done; // 15 is the order of the scheme
+			double dt_new = pow(integrator_epsilon/error,1./16.)*dt_done; // 15 is the order of the scheme
 			const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 			// New timestep is smaller.
 			if (fabs(dt_new/dt_done) < 1.0) {
