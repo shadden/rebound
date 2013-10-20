@@ -75,7 +75,10 @@ const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 
 
 double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
-unsigned int niter 		= 6;	// Number of iterations (6 initially and if timestep was rejected, 2 otherwise)
+unsigned long steps; 			// Steps taken so far (used to set number of iterations)  
+unsigned int niter; 			// Number of iterations
+unsigned int niter_initial	= 100;	// Number of iterations (initially)
+unsigned int niter_normal	= 4;	// Number of iterations (normal)
 int N3allocated 		= 0; 	// Size of allocated arrays.
 int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
@@ -141,7 +144,7 @@ void integrator_part2(){
 	while(!integrator_radau_step());
 }
  
-  
+
 int integrator_radau_step() {
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
@@ -163,13 +166,19 @@ int integrator_radau_step() {
 		particles_out = realloc(particles_out,sizeof(struct particle)*N);
 		
 		N3allocated = N3;
-		niter = 6;
+		steps= 0;
 	}
+	
+	if (steps<2){
+		niter = niter_initial;
+	}
+
+	steps++;
 	
 	struct particle* particles_in  = particles;
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
-	for(int k=0;k<N;++k) {
+	for(int k=0;k<N;k++) {
 		x1[3*k]   = particles[k].x;
 		x1[3*k+1] = particles[k].y;
 		x1[3*k+2] = particles[k].z;
@@ -181,7 +190,7 @@ int integrator_radau_step() {
 		a1[3*k+2] = particles[k].az;
 	}
 
-	for(int k=0;k<N3;++k) {
+	for(int k=0;k<N3;k++) {
 		g[0][k] = b[6][k]*d[15] + b[5][k]*d[10] + b[4][k]*d[6] + b[3][k]*d[3]  + b[2][k]*d[1]  + b[1][k]*d[0]  + b[0][k];
 		g[1][k] = b[6][k]*d[16] + b[5][k]*d[11] + b[4][k]*d[7] + b[3][k]*d[4]  + b[2][k]*d[2]  + b[1][k];
 		g[2][k] = b[6][k]*d[17] + b[5][k]*d[12] + b[4][k]*d[8] + b[3][k]*d[5]  + b[2][k];
@@ -192,7 +201,7 @@ int integrator_radau_step() {
 	}
 
 	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) {
-		for(int j=1;j<8;++j) {
+		for(int j=1;j<8;j++) {
 
 			s[0] = dt * h[j];
 			s[1] = s[0] * s[0] * 0.5;
@@ -204,7 +213,7 @@ int integrator_radau_step() {
 			s[7] = s[6] * h[j] * 0.75;
 			s[8] = s[7] * h[j] * 0.7777777777777778;
 
-			for(int k=0;k<N3;++k) {
+			for(int k=0;k<N3;k++) {
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
 			
@@ -218,12 +227,12 @@ int integrator_radau_step() {
 				s[6] = s[5] * h[j] * 0.8571428571428571;
 				s[7] = s[6] * h[j] * 0.875;
 
-				for(int k=0;k<N3;++k) {
+				for(int k=0;k<N3;k++) {
 					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
 				}
 			}
 
-			for(int k=0;k<N;++k) {
+			for(int k=0;k<N;k++) {
 				particles_out[k] = particles_in[k];
 
 				particles_out[k].x = x[3*k+0];
@@ -350,7 +359,7 @@ int integrator_radau_step() {
 				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 				if (dt_done>integrator_min_dt){
 					particles = particles_in;
-					niter = 6;
+					niter = niter_initial;
 					dt = dt_new;
 					return 0; // Step rejected. Do again. 
 				}
@@ -374,10 +383,10 @@ int integrator_radau_step() {
 	}
 
 	t += dt_done;
-	niter = 2;
+	niter = niter_normal;
 	// Swap particle buffers
 	particles = particles_in;
-	
+
 	for(int k=0;k<N;++k) {
 		particles[k].x = x1[3*k+0];	// Set final position
 		particles[k].y = x1[3*k+1];
