@@ -59,6 +59,8 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
+extern double output_error;
+
 int 	integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
 double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion devided by the acceleration is smaller than this value or timestep is rejected. 
 							// Play with integrator_epsilon to make sure you get a converged results. 
@@ -321,6 +323,15 @@ int integrator_radau_step() {
 		}
 	}
 	const double dt_done = dt;
+
+	if (1){
+		double error = 0.0;
+		for(int k=0;k<N3;++k) {
+			double errork = fabs(b[6][k]/a[k]);
+			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
+		}
+		output_error = error;
+	}
 
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
