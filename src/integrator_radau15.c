@@ -67,6 +67,7 @@ double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion
 							// The true fractional error is often many orders of magnitude smaller.
 							// If it is zero, then a constant timestep is used (default). 
 double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
+double	integrator_error			= 0;	// Error estimate in last timestep (used for debugging only)
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -77,8 +78,8 @@ double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
 unsigned long steps; 			// Steps taken so far (used to set number of iterations)  
 unsigned int niter; 			// Number of iterations
-unsigned int niter_initial	= 100;	// Number of iterations (initially)
-unsigned int niter_normal	= 4;	// Number of iterations (normal)
+unsigned int niter_initial	= 6;	// Number of iterations (initially)
+unsigned int niter_normal	= 2;	// Number of iterations (normal)
 int N3allocated 		= 0; 	// Size of allocated arrays.
 int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
@@ -200,38 +201,39 @@ int integrator_radau_step() {
 		g[6][k] = b[6][k];
 	}
 
-	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) {
-		for(int j=1;j<8;j++) {
+	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) { 	// Predictor Corrector Loop
+		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
-			s[0] = dt * h[j];
+			s[0] = dt * h[n];
 			s[1] = s[0] * s[0] * 0.5;
-			s[2] = s[1] * h[j] * 0.3333333333333333;
-			s[3] = s[2] * h[j] * 0.5;
-			s[4] = s[3] * h[j] * 0.6;
-			s[5] = s[4] * h[j] * 0.6666666666666667;
-			s[6] = s[5] * h[j] * 0.7142857142857143;
-			s[7] = s[6] * h[j] * 0.75;
-			s[8] = s[7] * h[j] * 0.7777777777777778;
+			s[2] = s[1] * h[n] * 0.3333333333333333;
+			s[3] = s[2] * h[n] * 0.5;
+			s[4] = s[3] * h[n] * 0.6;
+			s[5] = s[4] * h[n] * 0.6666666666666667;
+			s[6] = s[5] * h[n] * 0.7142857142857143;
+			s[7] = s[6] * h[n] * 0.75;
+			s[8] = s[7] * h[n] * 0.7777777777777778;
 
-			for(int k=0;k<N3;k++) {
+			for(int k=0;k<N3;k++) {						// Predict positions at interval n using b values
 				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
 			}
 			
 			if (integrator_force_is_velocitydependent){
-				s[0] = dt * h[j];
-				s[1] = s[0] * h[j] * 0.5;
-				s[2] = s[1] * h[j] * 0.6666666666666667;
-				s[3] = s[2] * h[j] * 0.75;
-				s[4] = s[3] * h[j] * 0.8;
-				s[5] = s[4] * h[j] * 0.8333333333333333;
-				s[6] = s[5] * h[j] * 0.8571428571428571;
-				s[7] = s[6] * h[j] * 0.875;
+				s[0] = dt * h[n];
+				s[1] = s[0] * h[n] * 0.5;
+				s[2] = s[1] * h[n] * 0.6666666666666667;
+				s[3] = s[2] * h[n] * 0.75;
+				s[4] = s[3] * h[n] * 0.8;
+				s[5] = s[4] * h[n] * 0.8333333333333333;
+				s[6] = s[5] * h[n] * 0.8571428571428571;
+				s[7] = s[6] * h[n] * 0.875;
 
-				for(int k=0;k<N3;k++) {
+				for(int k=0;k<N3;k++) {					// Predict velocities at interval n using b values
 					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
 				}
 			}
 
+			// Prepare particles arrays for force calculation
 			for(int k=0;k<N;k++) {
 				particles_out[k] = particles_in[k];
 
@@ -245,14 +247,14 @@ int integrator_radau_step() {
 			}
 
 			particles = particles_out;
-			integrator_update_acceleration();
+			integrator_update_acceleration();				// Calculate forces at interval n
 
 			for(int k=0;k<N;++k) {
 				a[3*k]   = particles[k].ax;
 				a[3*k+1] = particles[k].ay;  
 				a[3*k+2] = particles[k].az;
 			}
-			switch (j) {
+			switch (n) {							// Improve b and g values
 				case 1: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g[0][k];
@@ -332,16 +334,6 @@ int integrator_radau_step() {
 		}
 	}
 	const double dt_done = dt;
-
-	if (1){
-		double error = 0.0;
-		for(int k=0;k<N3;++k) {
-			double errork = fabs(b[6][k]/a[k]);
-			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
-		}
-		output_error = error;
-	}
-
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
@@ -349,6 +341,7 @@ int integrator_radau_step() {
 			double errork = fabs(b[6][k]/a[k]);
 			if (!isnan(errork) && !isinf(errork) && errork>error) error = errork;
 		}
+		integrator_error = error; // Only used for debugging
 		// Do not change timestep if all accelerations equal to zero.
 		if  (error>0.0){
 			double dt_new = pow(integrator_epsilon/error,1./16.)*dt_done; // 15 is the order of the scheme
