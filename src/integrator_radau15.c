@@ -76,10 +76,8 @@ const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 
 
 double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
-unsigned long steps; 			// Steps taken so far (used to set number of iterations)  
-unsigned int niter; 			// Number of iterations
-unsigned int niter_initial	= 6;	// Number of iterations (initially)
-unsigned int niter_normal	= 2;	// Number of iterations (normal)
+unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
+unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 int N3allocated 		= 0; 	// Size of allocated arrays.
 int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
@@ -145,7 +143,6 @@ void integrator_part2(){
 	while(!integrator_radau_step());
 }
  
-
 int integrator_radau_step() {
 	const int N3 = 3*N;
 	if (N3 > N3allocated) {
@@ -165,16 +162,8 @@ int integrator_radau_step() {
 		v1 = realloc(v1,sizeof(double)*N3);
 		a1 = realloc(a1,sizeof(double)*N3);
 		particles_out = realloc(particles_out,sizeof(struct particle)*N);
-		
 		N3allocated = N3;
-		steps= 0;
 	}
-	
-	if (steps<2){
-		niter = niter_initial;
-	}
-
-	steps++;
 	
 	struct particle* particles_in  = particles;
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
@@ -201,7 +190,20 @@ int integrator_radau_step() {
 		g[6][k] = b[6][k];
 	}
 
-	for (int main_loop_counter=0;main_loop_counter<niter;++main_loop_counter) { 	// Predictor Corrector Loop
+	double predictor_corrector_error = 1;
+	int iterations = 0;
+	while(predictor_corrector_error>1e-10){						// Predictor corrector loop
+		if (iterations>=integrator_iterations_max){
+			integrator_iterations_max_exceeded++;
+			if (integrator_iterations_max_exceeded==1){
+				fprintf(stderr,"\n\033[1mWarning!\033[0m Predictor corrector loop in integrator_radau15.c did not converge.\n");
+				fprintf(stderr,"This is typically an indication for the timestep being too large.\n");
+			}
+			break;								// Quit predictor corrector loop
+		}
+		predictor_corrector_error = 0;
+		iterations++;
+
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
 			s[0] = dt * h[n];
@@ -321,7 +323,7 @@ int integrator_radau_step() {
 						double tmp = g[6][k];
 						double gk = a[k] - a1[k];
 						g[6][k] = ((((((gk*r[21] - g[0][k])*r[22] - g[1][k])*r[23] - g[2][k])*r[24] - g[3][k])*r[25] - g[4][k])*r[26] - g[5][k])*r[27];
-						tmp = g[6][k] - tmp;
+						tmp = g[6][k] - tmp;	
 						b[0][k] += tmp * c[15];
 						b[1][k] += tmp * c[16];
 						b[2][k] += tmp * c[17];
@@ -329,10 +331,18 @@ int integrator_radau_step() {
 						b[4][k] += tmp * c[19];
 						b[5][k] += tmp * c[20];
 						b[6][k] += tmp;
+						
+						// Monitor change in b[6][k]/a[k]. The iteration is converged if it is close to 0.
+						double fabstmp = fabs(tmp/a[k]);
+						if (fabstmp>predictor_corrector_error && isfinite(fabstmp)){
+							predictor_corrector_error = fabstmp;
+						}
 					} break;
 			}
+		//	if (n==7 && iterations>7)printf("%d %e\n",iterations,predictor_corrector_error);
 		}
 	}
+		//	printf("\n");
 	const double dt_done = dt;
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
@@ -352,7 +362,6 @@ int integrator_radau_step() {
 				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 				if (dt_done>integrator_min_dt){
 					particles = particles_in;
-					niter = niter_initial;
 					dt = dt_new;
 					return 0; // Step rejected. Do again. 
 				}
@@ -376,7 +385,6 @@ int integrator_radau_step() {
 	}
 
 	t += dt_done;
-	niter = niter_normal;
 	// Swap particle buffers
 	particles = particles_in;
 
