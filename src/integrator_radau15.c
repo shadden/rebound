@@ -59,8 +59,6 @@
 #error RADAU15 integrator not working with MPI.
 #endif
 
-extern double output_error;
-
 int 	integrator_force_is_velocitydependent	= 1;	// Turn this off to safe some time if the force is not velocity dependent.
 double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion devided by the acceleration is smaller than this value or timestep is rejected. 
 							// Play with integrator_epsilon to make sure you get a converged results. 
@@ -68,6 +66,8 @@ double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion
 							// If it is zero, then a constant timestep is used (default). 
 double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 double	integrator_error			= 0;	// Error estimate in last timestep (used for debugging only)
+unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
+unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -76,8 +76,6 @@ const double vc[7] 	= { 0.5, 0.3333333333333333, 0.25, 0.2, 0.1666666666666667, 
 
 double r[28],c[21],d[21],s[9]; // These constants will be set dynamically.
 
-unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
-unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 int N3allocated 		= 0; 	// Size of allocated arrays.
 int integrator_radau_init_done 	= 0;	// Calculate coefficients once.
 
@@ -196,8 +194,7 @@ int integrator_radau_step() {
 		if (iterations>=integrator_iterations_max){
 			integrator_iterations_max_exceeded++;
 			if (integrator_iterations_max_exceeded==1){
-				fprintf(stderr,"\n\033[1mWarning!\033[0m Predictor corrector loop in integrator_radau15.c did not converge.\n");
-				fprintf(stderr,"This is typically an indication for the timestep being too large.\n");
+				fprintf(stderr,"\n\033[1mWarning!\033[0m A large number (>100) of predictor corrector loops in integrator_radau15.c did not converge. This is typically an indication of the timestep being too large.\n");
 			}
 			break;								// Quit predictor corrector loop
 		}
