@@ -43,6 +43,7 @@
 
 double energy();
 double energy_init = 0; 
+double ecc =0;
 extern double integrator_epsilon;
 extern double integrator_error;
 void problem_init(int argc, char* argv[]){
@@ -50,7 +51,7 @@ void problem_init(int argc, char* argv[]){
 	G 		= 1;		
 
 	// Setup homog. sphere
-	tmax		= 1e5*sqrt(2.)*M_PI;
+	tmax		= 1e4*sqrt(2.)*M_PI;
 	dt		= sqrt(2.)*M_PI/input_get_double(argc,argv,"timesteps",1000);
 	integrator_epsilon = input_get_double(argc,argv,"epsilon",0);
 	boxsize = 500;	
@@ -69,13 +70,13 @@ void problem_init(int argc, char* argv[]){
 	particles_add(p1);
 	
 	{
-		double e=input_get_double(argc,argv,"e",0);
+		ecc=input_get_double(argc,argv,"e",0);
 		struct particle p2;
-		p2.x = 1.+e; 
+		p2.x = 1.+ecc; 
 		p2.y = 0; 
 		p2.z = 0; 
 		p2.vx = 0; 
-		p2.vy = sqrt((1.-e)/(1.+e)*2./p2.x); 
+		p2.vy = sqrt((1.-ecc)/(1.+ecc)*2./p2.x); 
 		p2.vz = 0; 
 		p2.m = 1;
 		particles_add(p2);
@@ -119,7 +120,7 @@ double energy(){
 void problem_inloop(){
 }
 
-FILE* ofe = NULL; 
+//FILE* ofe = NULL; 
 void problem_finish(){
 	printf("\nFinished. Time: %e. Difference to exact time: %e. Timestep: %e\n",t,t-tmax,dt);
 #ifdef INTEGRATOR_LEAPFROG
@@ -129,32 +130,34 @@ void problem_finish(){
 	FILE* of = fopen("energy_radau15.txt","a+"); 
 #endif
 	fprintf(of,"%e\t",dt);
+	fprintf(of,"%e\t",integrator_epsilon);
+	fprintf(of,"%e\t",ecc);
 	fprintf(of,"%e\t",fabs((energy()-energy_init)/energy_init));
 	fprintf(of,"\n");
 	fclose(of);
-	fprintf(ofe,"\n");
-	fclose(ofe);
-	if (N==2){
-		system("cat energy.txt >> energy.plot");
-	}else{
-		system("rm energy.txt");
-	}
+//	fprintf(ofe,"\n");
+//	fclose(ofe);
+//	if (N==2){
+//		system("cat energy.txt >> energy.plot");
+//	}else{
+//		system("rm energy.txt");
+//	}
 }
 double outputnum=0;
 double outputnum_max=1024;
 void problem_output(){
-	if(output_check(tmax/10000)){
-		output_timing();
-		if (ofe==NULL){
-			ofe= fopen("energy.txt","a+"); 
-		}
-		fprintf(ofe,"%e\t",t);
-		fprintf(ofe,"%e\t",dt);
-		fprintf(ofe,"%e\t",integrator_epsilon);
-		fprintf(ofe,"%e\t",integrator_error);
-		fprintf(ofe,"%e\t",fabs((energy()-energy_init)/energy_init));
-		fprintf(ofe,"\n");
-		outputnum++;
-	}
+//	if(output_check(tmax/10000)){
+//		output_timing();
+//		if (ofe==NULL){
+//			ofe= fopen("energy.txt","a+"); 
+//		}
+//		fprintf(ofe,"%e\t",t);
+//		fprintf(ofe,"%e\t",dt);
+//		fprintf(ofe,"%e\t",integrator_epsilon);
+//		fprintf(ofe,"%e\t",integrator_error);
+//		fprintf(ofe,"%e\t",fabs((energy()-energy_init)/energy_init));
+//		fprintf(ofe,"\n");
+//		outputnum++;
+//	}
 }
 
