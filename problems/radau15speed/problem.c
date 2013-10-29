@@ -93,7 +93,7 @@ void problem_init(int argc, char* argv[]){
 	G		= k*k;
 
 	// Setup homog. sphere
-	tmax		= 1e4*365.;
+	tmax		= 1e5*365.;
 	dt		= 365./input_get_double(argc,argv,"timesteps",100);
 #ifdef INTEGRATOR_RADAU15
 	integrator_epsilon = input_get_double(argc,argv,"epsilon",0);
@@ -153,6 +153,7 @@ double energy(){
 void problem_inloop(){
 }
 
+FILE* ofe=NULL;
 //FILE* ofe = NULL; 
 void problem_finish(){
 	printf("\nFinished. Time: %e. Difference to exact time: %e. Timestep: %e\n",t,t-tmax,dt);
@@ -177,7 +178,19 @@ void problem_finish(){
 #endif
 	fprintf(of,"\n");
 	fclose(of);
+//	fclose(ofe);
 }
 void problem_output(){
+//	if(output_check(tmax/10000.)){
+//		output_timing();
+//		if (ofe==NULL){
+//			ofe= fopen("energy.txt","a+"); 
+//		}
+//		fprintf(ofe,"%e\t",t);
+//		fprintf(ofe,"%e\t",dt);
+//		fprintf(ofe,"%e\t",integrator_epsilon);
+//		fprintf(ofe,"%e\t",fabs((energy()-energy_init)/energy_init));
+//		fprintf(ofe,"\n");
+//	}
 }
 

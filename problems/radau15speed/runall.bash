@@ -12,10 +12,10 @@ function runtest {
 	done
 }
 
-#rm energy_*.txt
-#make leapfrog
-#runtest
-#make radau15
-#runtest
+rm energy_*.txt
+make leapfrog
+runtest
+make radau15
+runtest
 make wh
 runtest
