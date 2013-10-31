@@ -52,6 +52,7 @@ const double Rhill_saturn	= 0.43767071; 	// Hill sphere of Saturn in AU
 
 double Mplanet;
 double aplanet;
+double Pplanet;
 double Rplanet;
 double Rhill_planet;
 double Rring_inner_planet;
@@ -96,6 +97,7 @@ void problem_init(int argc, char* argv[]){
 	planet.vz = 0;
 	particles_add(planet);
 	Rhill_planet 		= aplanet*pow(planet.m/star.m/3.,1./3.);
+	Pplanet			= 2.*M_PI*sqrt(aplanet*aplanet*aplanet/(1.+Mplanet)/G);
 	Rplanet 		= input_get_double(argc,argv,"Rplanet",1)*Rsaturn;
 	J2planet 		= input_get_double(argc,argv,"J2planet",1)*J2saturn;
 	Obliquity 		= input_get_double(argc,argv,"Obliquity",0)/180.*M_PI;
@@ -241,7 +243,9 @@ void output_append_ascii_rings(char* filename){
 	fclose(of);
 }
 
-
+int burst_count = -1;
+int burst = 0;
+int burst_max = 1000;
 void problem_output(){
 	if(output_check(2.*M_PI)){
 		const struct particle star 	= particles[0];				// cache
@@ -273,8 +277,15 @@ void problem_output(){
 	if(output_check(2.*M_PI)){
 		output_timing();
 	}
-	if(output_check(2.454512342155)){
-		output_append_ascii_rings("ascii.txt");
+	if(output_check(100.*Pplanet)){
+		burst = burst_max;
+		burst_count++;
+	}
+	if (burst){
+		char filename[128];
+		sprintf(filename,"ascii_%04d.txt",burst_count);
+		output_append_ascii_rings(filename);
+		burst--;
 	}
 	if (fabs(particles[0].x)>boxsize_x/10. || fabs(particles[0].y)>boxsize_y/10. || fabs(particles[0].z)>boxsize_z/10. ){
 		tools_move_to_center_of_momentum();
