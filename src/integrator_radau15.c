@@ -409,13 +409,13 @@ int integrator_radau_step() {
 	const double q7 = q3 * q4;
 
 	for(int k=0;k<N3;++k) {
-		s[0] = b[0][k] - e[0][k];
-		s[1] = b[1][k] - e[1][k];
-		s[2] = b[2][k] - e[2][k];
-		s[3] = b[3][k] - e[3][k];
-		s[4] = b[4][k] - e[4][k];
-		s[5] = b[5][k] - e[5][k];
-		s[6] = b[6][k] - e[6][k];
+		double be0 = b[0][k] - e[0][k];
+		double be1 = b[1][k] - e[1][k];
+		double be2 = b[2][k] - e[2][k];
+		double be3 = b[3][k] - e[3][k];
+		double be4 = b[4][k] - e[4][k];
+		double be5 = b[5][k] - e[5][k];
+		double be6 = b[6][k] - e[6][k];
 
 		e[0][k] = q1*(b[6][k]* 7.0 + b[5][k]* 6.0 + b[4][k]* 5.0 + b[3][k]* 4.0 + b[2][k]* 3.0 + b[1][k]*2.0 + b[0][k]);
 		e[1][k] = q2*(b[6][k]*21.0 + b[5][k]*15.0 + b[4][k]*10.0 + b[3][k]* 6.0 + b[2][k]* 3.0 + b[1][k]);
@@ -425,13 +425,13 @@ int integrator_radau_step() {
 		e[5][k] = q6*(b[6][k]* 7.0 + b[5][k]);
 		e[6][k] = q7* b[6][k];
 
-		b[0][k] = e[0][k] + s[0];
-		b[1][k] = e[1][k] + s[1];
-		b[2][k] = e[2][k] + s[2];
-		b[3][k] = e[3][k] + s[3];
-		b[4][k] = e[4][k] + s[4];
-		b[5][k] = e[5][k] + s[5];
-		b[6][k] = e[6][k] + s[6];
+		b[0][k] = e[0][k] + be0;
+		b[1][k] = e[1][k] + be1;
+		b[2][k] = e[2][k] + be2;
+		b[3][k] = e[3][k] + be3;
+		b[4][k] = e[4][k] + be4;
+		b[5][k] = e[5][k] + be5;
+		b[6][k] = e[6][k] + be6;
 	}
 	return 1; // Success.
 }
