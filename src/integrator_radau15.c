@@ -362,11 +362,12 @@ int integrator_radau_step() {
 					dt = dt_new;
 					return 0; // Step rejected. Do again. 
 				}
+			}else{
+				// New timestep is larger.
+				dt_new *= safety_factor;	// This safety_factor doesn't necesarily have to be the same as above
+				if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
+				if (fabs(dt_new/dt_done) > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
 			}
-			// New timestep is larger.
-			dt_new *= safety_factor;	// This safety_factor doesn't necesarily have to be the same as above
-			if (fabs(dt_new/dt_done) > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
-			if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 			dt = dt_new;
 		}
 	}
