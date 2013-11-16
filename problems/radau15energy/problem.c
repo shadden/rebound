@@ -43,6 +43,7 @@
 
 double energy();
 double energy_init = 0; 
+double energy_max = 0; 
 double ecc =0;
 extern double integrator_epsilon;
 extern double integrator_error;
@@ -132,7 +133,7 @@ void problem_finish(){
 	fprintf(of,"%e\t",dt);
 	fprintf(of,"%e\t",integrator_epsilon);
 	fprintf(of,"%e\t",ecc);
-	fprintf(of,"%e\t",fabs((energy()-energy_init)/energy_init));
+	fprintf(of,"%e\t",energy_max);
 	fprintf(of,"\n");
 	fclose(of);
 //	fprintf(ofe,"\n");
@@ -146,6 +147,9 @@ void problem_finish(){
 double outputnum=0;
 double outputnum_max=1024;
 void problem_output(){
+	double en = fabs((energy()-energy_init)/energy_init);
+	if (en>energy_max) energy_max = en;
+
 //	if(output_check(tmax/10000)){
 //		output_timing();
 //		if (ofe==NULL){
