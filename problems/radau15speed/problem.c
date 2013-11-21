@@ -169,9 +169,9 @@ void problem_finish(){
 	fprintf(of,"%e\t",dt);
 	tools_move_to_center_of_momentum();
 	fprintf(of,"%e\t",fabs((energy()-energy_init)/energy_init));
-		struct timeval tim;
-		gettimeofday(&tim, NULL);
-		double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
 	fprintf(of,"%e\t",timing_final-timing_initial);
 #ifdef INTEGRATOR_RADAU15
 	fprintf(of,"%e\t",integrator_epsilon);
@@ -181,6 +181,11 @@ void problem_finish(){
 //	fclose(ofe);
 }
 void problem_output(){
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing_final = tim.tv_sec+(tim.tv_usec/1000000.0);
+	if (timing_final-timing_initial>15.) exit(0);
+
 //	if(output_check(tmax/10000.)){
 //		output_timing();
 //		if (ofe==NULL){

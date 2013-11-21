@@ -133,7 +133,9 @@ void problem_finish(){
 	fprintf(of,"%e\t",dt);
 	fprintf(of,"%e\t",integrator_epsilon);
 	fprintf(of,"%e\t",ecc);
-	fprintf(of,"%e\t",energy_max);
+//	double en = fabs((energy()-energy_init)/energy_init);
+	double en = energy_max;
+	fprintf(of,"%e\t",en);
 	fprintf(of,"\n");
 	fclose(of);
 //	fprintf(ofe,"\n");
