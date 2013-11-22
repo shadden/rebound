@@ -93,7 +93,7 @@ void problem_init(int argc, char* argv[]){
 	G		= k*k;
 
 	// Setup homog. sphere
-	tmax		= 1e5*365.;
+	tmax		= 1e4*365.;
 	dt		= 365./input_get_double(argc,argv,"timesteps",100);
 #ifdef INTEGRATOR_RADAU15
 	integrator_epsilon = input_get_double(argc,argv,"epsilon",0);
