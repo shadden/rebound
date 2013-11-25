@@ -31,10 +31,10 @@
 #include "tools.h"
 #include "output.h"
 #include "particle.h"
+#include "integrator.h"
 #include "problem.h"
 
 void additional_forces();
-extern double integrator_epsilon;
 double betaparticles = 0.01; 	// Beta parameter. 
 				// Defined as the ratio of radiation pressure over gravity.
 
@@ -72,14 +72,16 @@ void problem_init(int argc, char* argv[]){
 	tools_move_to_center_of_momentum();
 
 	// Dust particles
-	while(N<2){
+	while(N<3){ 	// Three particles in total (star, planet, dust particle) 
 		struct particle p; 
-		p.m  = 0;	// massless
-		double r = 1.;// tools_uniform(1.4,2);
-		double v = sqrt(G*(star.m*(1.-betaparticles))/r);
+		p.m  = 0;		// massless
+		double r = 0.001;	// distance from planet planet
+		double v = sqrt(G*(planet.m)/r);
 		double phi = tools_uniform(0,2.*M_PI);
 		p.x  = r*sin(phi);  p.y  = r*cos(phi); p.z  = 0; 
 		p.vx = -v*cos(phi); p.vy = v*sin(phi); p.vz = 0;
+		p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
+		p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
 		p.ax = 0; p.ay = 0; p.az = 0;
 		particles_add(p); 
 	}
@@ -122,12 +124,12 @@ void problem_inloop(){
 	}
 	if(output_check(M_PI*2000.)){ // output every 1000 years
 		FILE* f = fopen("r.txt","a");
-		const struct particle star = particles[0];
-		for (int i=1;i<N;i++){
+		const struct particle planet = particles[1];
+		for (int i=2;i<N;i++){
 			const struct particle p = particles[i]; 
-			const double prx  = p.x-star.x;
-			const double pry  = p.y-star.y;
-			const double prz  = p.z-star.z;
+			const double prx  = p.x-planet.x;
+			const double pry  = p.y-planet.y;
+			const double prz  = p.z-planet.z;
 			const double pr   = sqrt(prx*prx + pry*pry + prz*prz); 	// distance relative to star
 			fprintf(f,"%e\t%e\n",t,pr);
 		}

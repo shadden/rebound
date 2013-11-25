@@ -31,11 +31,11 @@
 #include "tools.h"
 #include "output.h"
 #include "particle.h"
+#include "integrator.h"
 
 #ifdef OPENGL
 extern int display_wire;
 #endif // OPENGL
-extern double integrator_epsilon;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants

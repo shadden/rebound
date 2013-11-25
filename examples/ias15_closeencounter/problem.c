@@ -36,7 +36,6 @@
 #ifdef OPENGL
 extern int display_wire;
 #endif // OPENGL
-extern double integrator_epsilon;
 
 void problem_init(int argc, char* argv[]){
 	dt 		= 0.1*2.*M_PI;			// initial timestep = 0.1 years
