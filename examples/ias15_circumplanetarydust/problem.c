@@ -41,10 +41,10 @@ double betaparticles = 0.01; 	// Beta parameter.
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= 1e-3;	// Initial timestep.
-	integrator_epsilon 	= 1e-4;	// Accuracy parameter.
+	integrator_epsilon 	= 1e-3;	// Accuracy parameter.
 	boxsize 		= 10;	
 	tmax			= 1e6;
-	N_active		= 1; 	// Only the star is massive.
+	N_active		= 2; 	// Only the star and the planet are massive.
 	problem_additional_forces 	= additional_forces;
 	init_box();
 	
@@ -69,24 +69,24 @@ void problem_init(int argc, char* argv[]){
 	particles_add(planet);
 	
 	
-	tools_move_to_center_of_momentum();
 
 	// Dust particles
 	while(N<3){ 	// Three particles in total (star, planet, dust particle) 
 		struct particle p; 
 		p.m  = 0;		// massless
 		double r = 0.001;	// distance from planet planet
-		double v = sqrt(G*(planet.m)/r);
-		double phi = tools_uniform(0,2.*M_PI);
-		p.x  = r*sin(phi);  p.y  = r*cos(phi); p.z  = 0; 
-		p.vx = -v*cos(phi); p.vy = v*sin(phi); p.vz = 0;
+		double v = sqrt(G*planet.m/r);
+		p.x  = r; p.y  = 0; p.z  = 0; 
+		p.vx = 0; p.vy = v; p.vz = 0;
 		p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 		p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
 		p.ax = 0; p.ay = 0; p.az = 0;
 		particles_add(p); 
 	}
+	
+	tools_move_to_center_of_momentum();
 
-	system("rm -v r.txt");	
+	system("rm -v a.txt");	
 }
 
 void force_radiation(){
@@ -122,8 +122,8 @@ void problem_inloop(){
 	if(output_check(4000.*dt)){
 		output_timing();
 	}
-	if(output_check(M_PI*2000.)){ // output every 1000 years
-		FILE* f = fopen("r.txt","a");
+	if(output_check(M_PI*2.)){ // output every year
+		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[1];
 		for (int i=2;i<N;i++){
 			const struct particle p = particles[i]; 
@@ -131,7 +131,15 @@ void problem_inloop(){
 			const double pry  = p.y-planet.y;
 			const double prz  = p.z-planet.z;
 			const double pr   = sqrt(prx*prx + pry*pry + prz*prz); 	// distance relative to star
-			fprintf(f,"%e\t%e\n",t,pr);
+			
+			const double pvx  = p.vx-planet.vx;
+			const double pvy  = p.vy-planet.vy;
+			const double pvz  = p.vz-planet.vz;
+			const double pv   = sqrt(pvx*pvx + pvy*pvy + pvz*pvz); 	// distance relative to star
+			
+			const double a = -G*planet.m/( pv*pv - 2.*G*planet.m/pr );			// semi major axis
+			
+			fprintf(f,"%e\t%e\n",t,a);
 		}
 		fclose(f);
 	}
