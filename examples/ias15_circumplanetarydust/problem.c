@@ -122,7 +122,7 @@ void problem_inloop(){
 	if(output_check(4000.*dt)){
 		output_timing();
 	}
-	if(output_check(M_PI*2.)){ // output every year
+	if(output_check(M_PI*2.*100.)){ // output every 100 years
 		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[1];
 		for (int i=2;i<N;i++){

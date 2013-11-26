@@ -5,7 +5,7 @@ set terminal pdf monochrome dashed enhanced size 3in,3in
 set xlabel "time [years]"
 set ylabel "semimajor axis [AU]"
 set multiplot layout 2,1
-beta = 0.1
+beta = 0.01
 set lmargin 12
 k = 2.497557889905430e-03*beta*4./3.
 a(t) = 0.001*sqrt(1.-k*t)
