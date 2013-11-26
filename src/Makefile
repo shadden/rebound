@@ -7,7 +7,7 @@ ifeq ($(OS), Linux)
 	LIB+= -lm
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include  -Wall -g
+	OPT+= -I/usr/local/include  -Wall -Wno-deprecated -g
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif
