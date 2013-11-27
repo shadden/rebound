@@ -67,8 +67,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>Leap frog, second order, symplectic</td></tr>
   <tr><td><pre>integrator_wh.c      </pre></td>
      <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
-  <tr><td><pre>integrator_radau15.c </pre></td>
-     <td>15th order, non-symplectic integrator, can handle arbitrary (velocity dependent) forces, Everhart 1985</td></tr>
+  <tr><td><pre>integrator_ias15.c </pre></td>
+     <td>IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985</td></tr>
   <tr><td><pre>integrator_sei.c     </pre></td>
      <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
 </table>
