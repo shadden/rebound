@@ -43,7 +43,7 @@
 // These variables have no effect for sei.
 int integrator_force_is_velocitydependent 	= 1;
 double integrator_epsilon 			= 0;
-extern double integrator_min_dt 		= 0;
+double integrator_min_dt 			= 0;
 
 
 double OMEGA 	= 1.; 	/**< Epicyclic/orbital frequency. */
