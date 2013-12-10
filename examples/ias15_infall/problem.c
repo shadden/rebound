@@ -39,7 +39,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	G 		= 1;
-	dt 		= 1;				// Initial timestep 	
+	dt 		= 1e-6;				// Initial timestep 	
 	integrator_epsilon = 1e-3;			// Accuracy
 	softening 	= 0.1;
 
