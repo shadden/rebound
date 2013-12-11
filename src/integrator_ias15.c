@@ -342,12 +342,13 @@ int integrator_ias15_step() {
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
-		const double h1_7 = pow(h[1],7); // h[1]^7
-		for(int k=0;k<N3;++k) {
-			const double b6kak  = fabs(b[6][k]/a[k]);	// Estimate of error 
-			const double b6kh17 = fabs(b[6][k]*h1_7);	// Smallest contribution to sum at any intermediate step. Should be larger than floating point precision.
-			if (isnormal(b6kak) && b6kak>error && isnormal(b6kh17) && b6kh17 > 1.0e-15 ) error = b6kak;
+		for(int k=0;k<N;k++) {
+			const double b6k = b[6][k*3+0]*b[6][k*3+0] + b[6][k*3+1]*b[6][k*3+1] + b[6][k*3+2]*b[6][k*3+2];
+			const double ak  = a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2]; 
+			const double b6kak = fabs(b6k/ak);
+			if (isnormal(b6kak) && b6kak>error) error = b6kak;
 		}
+		error = sqrt(error);
 		integrator_error = error; // Only used for debugging and monitoring
 		
 		double dt_new = dt_done/safety_factor; // By default, increase timestep a little

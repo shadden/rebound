@@ -66,6 +66,12 @@ void problem_init(int argc, char* argv[]){
 		p.vz = 0;
 		particles_add(p); 
 	}
+	struct particle p;
+	p.m = 1;
+	p.x = 0; p.y = 0; p.z = 0;
+	p.vx = 0; p.vy = 0; p.vz = 0;
+	// This will break it:
+//	particles_add(p); 
 }
 
 void problem_inloop(){
