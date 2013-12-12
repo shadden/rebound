@@ -71,7 +71,7 @@ void problem_init(int argc, char* argv[]){
 	p.x = 0; p.y = 0; p.z = 0;
 	p.vx = 0; p.vy = 0; p.vz = 0;
 	// This will break it:
-//	particles_add(p); 
+	particles_add(p); 
 }
 
 void problem_inloop(){

@@ -60,6 +60,8 @@ double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion
 							// Play with integrator_epsilon to make sure you get a converged results. 
 							// The true fractional error is often many orders of magnitude smaller.
 							// If it is zero, then a constant timestep is used (default). 
+int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
+							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
 double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
 double	integrator_error			= 0;	// Error estimate in last timestep (used for debugging only)
 unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
@@ -339,28 +341,46 @@ int integrator_ias15_step() {
 	const double dt_done = dt;
 	
 	const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
+	
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
-		double error = 0.0;
-		double maxak = 0.0;
-		for(int k=0;k<N;k++) {
-			const double ak  = fabs(a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2]); 
-			if (isnormal(ak) && ak>maxak){
-				const double b6k = fabs(b[6][k*3+0]*b[6][k*3+0] + b[6][k*3+1]*b[6][k*3+1] + b[6][k*3+2]*b[6][k*3+2]);
-				const double errork = b6k/ak;
-				if (isnormal(errork) && errork>error){
-					error = errork;
+		// There are two options:
+		// integrator_epsilon_global==1  (default)
+		//   First, we determine the maximum acceleration and the maximum of the last term in the series. 
+		//   Then, the two are divided.
+		// integrator_epsilon_global==0
+		//   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
+		//   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
+		integrator_error = 0.0;
+		if (integrator_epsilon_global){
+			double maxak = 0.0;
+			double maxb6k = 0.0;
+			for(int k=0;k<N3;k++) {  // Looping over all particles and all 3 components of the acceleration. 
+				const double ak  = fabs(a[k]);
+				if (isnormal(ak) && ak>maxak){
 					maxak = ak;
+				}
+				const double b6k = fabs(b[6][k]); 
+				if (isnormal(b6k) && b6k>maxb6k){
+					maxb6k = b6k;
+				}
+			}
+			integrator_error = maxb6k/maxak;
+		}else{
+			for(int k=0;k<N3;k++) {
+				const double ak  = a[k];
+				const double b6k = b[6][k]; 
+				const double errork = fabs(b6k/ak);
+				if (isnormal(errork) && errork>integrator_error){
+					integrator_error = errork;
 				}
 			}
 		}
-		error = sqrt(error);
-		integrator_error = error; // Only used for debugging and monitoring
-		
+
 		double dt_new = dt_done/safety_factor; // By default, increase timestep a little
-		if  (isnormal(error)){
+		if  (isnormal(integrator_error)){
 			// if error estimate is available increase by more educated guess
-		 	dt_new = pow(integrator_epsilon/error,1./7.)*dt_done;
+		 	dt_new = pow(integrator_epsilon/integrator_error,1./7.)*dt_done;
 			// Add a safety factor to make sure we do not need to repeat timestep
 			dt_new *= safety_factor;  
 		}
