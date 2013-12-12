@@ -342,11 +342,17 @@ int integrator_ias15_step() {
 	if (integrator_epsilon>0){
 		// Estimate error (given by last term in series expansion) 
 		double error = 0.0;
+		double maxak = 0.0;
 		for(int k=0;k<N;k++) {
-			const double b6k = b[6][k*3+0]*b[6][k*3+0] + b[6][k*3+1]*b[6][k*3+1] + b[6][k*3+2]*b[6][k*3+2];
-			const double ak  = a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2]; 
-			const double b6kak = fabs(b6k/ak);
-			if (isnormal(b6kak) && b6kak>error) error = b6kak;
+			const double ak  = fabs(a[k*3+0]*a[k*3+0] + a[k*3+1]*a[k*3+1] + a[k*3+2]*a[k*3+2]); 
+			if (isnormal(ak) && ak>maxak){
+				const double b6k = fabs(b[6][k*3+0]*b[6][k*3+0] + b[6][k*3+1]*b[6][k*3+1] + b[6][k*3+2]*b[6][k*3+2]);
+				const double errork = b6k/ak;
+				if (isnormal(errork) && errork>error){
+					error = errork;
+					maxak = ak;
+				}
+			}
 		}
 		error = sqrt(error);
 		integrator_error = error; // Only used for debugging and monitoring
