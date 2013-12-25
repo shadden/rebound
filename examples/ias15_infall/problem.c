@@ -78,6 +78,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
+	printf("%e\n",dt);
 	output_timing();
 }
 
