@@ -329,8 +329,8 @@ int integrator_ias15_step() {
 						b[6][k] += tmp;
 						
 						// Monitor change in b[6][k]/a[k]. The iteration is converged if it is close to 0.
-						double fabstmp = fabs(tmp/a[k]);
-						//double fabstmp = fabs(tmp/b[6][k]);
+						//double fabstmp = fabs(tmp/a[k]);
+						double fabstmp = fabs(tmp/b[6][k]);
 						if (fabstmp>predictor_corrector_error && isfinite(fabstmp)){
 							predictor_corrector_error = fabstmp;
 						}
@@ -341,6 +341,7 @@ int integrator_ias15_step() {
 	}
 		//	printf("\n");
 	const double dt_done = dt;
+	printf(" iterations = %d\n",iterations);
 	
 	const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 	
