@@ -127,7 +127,7 @@ void problem_finish(){
 #ifdef INTEGRATOR_LEAPFROG
 	FILE* of = fopen("energy_leapfrog.txt","a+"); 
 #endif
-#ifdef INTEGRATOR_RADAU15
+#ifdef INTEGRATOR_IAS15
 	FILE* of = fopen("energy_radau15.txt","a+"); 
 #endif
 	fprintf(of,"%e\t",dt);
