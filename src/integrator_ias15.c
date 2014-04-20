@@ -341,7 +341,7 @@ int integrator_ias15_step() {
 	}
 		//	printf("\n");
 	const double dt_done = dt;
-	printf(" iterations = %d\n",iterations);
+	//printf(" iterations = %d\n",iterations);
 	
 	const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 	
