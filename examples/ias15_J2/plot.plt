@@ -1,5 +1,5 @@
 #!/bin/gnuplot
-set output "J2precession.pdf"
+set output "plot.pdf"
 set key top left
 set terminal pdf monochrome dashed enhanced size 3in,2in
 set xlabel "time [years]"
@@ -7,7 +7,7 @@ set ylabel "pericenter [deg]"
 set autoscale xfix 
 set yrange [0:360]
 mod360(x) = (x>360.)?mod360(x-360.):((x<0.)?mod360(x+360.):x)
-n0 = 792.4350417074
+n0 = 792.4350417074*0.534683065002063
 wdot = -n0*(3./2.*16298e-6/3./3.)
 set ytics 90
 

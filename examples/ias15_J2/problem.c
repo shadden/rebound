@@ -2,6 +2,9 @@
  * @file 	problem.c
  * @brief 	Example problem: J2 precession
  * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @descrtipion	This example presents an implementation of the J2
+ * gravitational moment. The equation of motions are integrated with
+ * the 15th order IAS15 integrator.
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -36,63 +39,62 @@
 #include "problem.h"
 
 void additional_forces();
-const double J2saturn	= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
-const double Msaturn	= 0.00028588598; 	// Mass of Saturn in solar masses 
-const double Rsaturn	= 0.00038925688; 	// Radius of Saturn in AU
+const double J2saturn			= 16298e-6; 		// J2 of Saturn (Murray and Dermott p 531) 
+const double Msaturn			= 0.00028588598; 	// mass of Saturn in solar masses 
+const double Rsaturn			= 0.00038925688; 	// radius of Saturn in AU
 
 double J2planet = J2saturn;
 double Rplanet	= Rsaturn;
-double ObliquityPlanet;				// Obliquity of the planet
+double ObliquityPlanet;						// obliquity of the planet
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 			= 1e-3;	// Initial timestep.
-	integrator_epsilon 	= 1e-3;	// Accuracy parameter.
-	boxsize 		= 0.01;	
-	tmax			= 1e1;
-	N_active		= 2; 	// Only the star and the planet are massive.
+	dt 				= 1e-3;			// initial timestep
+	integrator_epsilon 		= 1e-3;			// Accuracy parameter.
+	boxsize 			= 0.01;	
+	tmax				= 3e1;
+	N_active			= 2; 			// only the star and the planet are massive.
 	problem_additional_forces 	= additional_forces;
 	init_box();
 	
 	
 	// Planet
 	struct particle planet;
-	planet.m  = 1e-3;
+	planet.m  = Msaturn;
 	planet.x  = 0; planet.y  = 0; planet.z  = 0;
-	planet.ax = 0; planet.ay = 0; planet.az = 0;
 	planet.vx = 0; planet.vy = 0; planet.vz = 0;
 	particles_add(planet);
+	// Read obliquity from command line. Default is 0. 
 	ObliquityPlanet 		= input_get_double(argc,argv,"Obliquity",0.)/180.*M_PI;
 	
 	
 
-	// Dust particles
-	while(N<2){ 	// Three particles in total (star, planet, dust particle) 
+	// Add one dust particles
+	while(N<2){ 						// two particles in total (planet and dust particle) 
 		struct particle p; 
-		p.m  = 0;		// massless
-		double a = Rplanet*3.;	// distance from planet 
+		p.m  = 0;					// massless
+		double a = Rplanet*3.;				// small distance from planet (makes J2 important)
 		double e = 0.1;
-		double v = sqrt((1.+e)/(1.-e)*G*planet.m/a);
+		double v = sqrt((1.+e)/(1.-e)*G*planet.m/a);	// setup eccentric orbit (ignores J2)
 		p.x  = (1.-e)*a; p.y  = 0; p.z  = 0; 
 		p.vx = 0; p.vy = v; p.vz = 0;
 		p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 		p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
-		p.ax = 0; p.ay = 0; p.az = 0;
 		particles_add(p); 
 	}
 	
 	tools_move_to_center_of_momentum();
 
-	system("rm -v a.txt");	
+	system("rm -v a.txt");					// delete previous output
 }
 
 void force_J2(){
 	if (J2planet==0) return;
 	// Star 
-	const struct particle planet = particles[0];				// cache
+	const struct particle planet = particles[0];		// cache
 #pragma omp parallel for
 	for (int i=1;i<N;i++){
-		const struct particle p = particles[i]; 			// cache
+		const struct particle p = particles[i]; 	// cache
 		const double sprx  = p.x-planet.x;
 		const double spry  = p.y-planet.y;
 		const double sprz  = p.z-planet.z;
@@ -117,10 +119,10 @@ void additional_forces(){
 }
 
 void problem_inloop(){
-	if(output_check(4000.*dt)){
+	if(output_check(4000.*dt)){				// output something to screen	
 		output_timing();
 	}
-	if(output_check(M_PI*2.*0.01)){
+	if(output_check(M_PI*2.*0.01)){				// output semimajor axis to file
 		FILE* f = fopen("a.txt","a");
 		const struct particle planet = particles[0];
 		for (int i=1;i<N;i++){
