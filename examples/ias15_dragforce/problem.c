@@ -2,6 +2,9 @@
  * @file 	problem.c
  * @brief 	Example problem: Velocity dependent drag force
  * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @description	This is a simple example how to implement a velocity 
+ * dependent drag force. The example uses the IAS15 integrator, which 
+ * is ideally suited to handle non-conservative forces.
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -38,8 +41,8 @@ void additional_forces();
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 			= 1e-2;	// Initial timestep.
-	integrator_epsilon 	= 1e-6;	// Accuracy parameter.
+	dt 			= 1e-2;		// initial timestep.
+	integrator_epsilon 	= 1e-6;		// accuracy parameter.
 	boxsize 		= 10;	
 	tmax			= 40;
 
@@ -75,10 +78,11 @@ void problem_inloop(){
 }
 
 void problem_output(){
+	// Output some information to the screen every 100th timestep
 	if(output_check(100.*dt)){
 		output_timing();
 	}
-	// Output every timestep.
+	// Output the particle position to a file every timestep.
 	FILE* f = fopen("r.txt","a");
 	fprintf(f,"%e\t%e\t%e\n",t,particles[0].x, particles[1].vx);
 	fclose(f);

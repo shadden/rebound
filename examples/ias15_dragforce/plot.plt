@@ -8,7 +8,7 @@ unset key
 set autoscale fix
 set lmargin 12
 plot "r.txt" u 1:2
-set ylabel "position error"
+set ylabel "absolute position error"
 set logscale y
 set format y "10^{%T}"
 set ytics 100

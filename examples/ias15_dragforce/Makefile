@@ -1,8 +1,6 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=1
-export OPENMP=0
 export OPT=-O3
-export CC=gcc 
 
 all:
 	# Setup link to different modules
