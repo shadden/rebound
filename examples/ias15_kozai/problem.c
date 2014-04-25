@@ -2,6 +2,11 @@
  * @file 	problem.c
  * @brief 	Example problem: Kozai.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @description	This example uses the IAS15 integrator to simulate
+ * Kozai cycles of a planet perturbed by a distant star. The integrator
+ * automatically adjusts the timestep so that even very high 
+ * eccentricity encounters are resovled with high accuracy.
+ *
  * 
  * @section 	LICENSE
  * Copyright (c) 2013 Hanno Rein, Dave Spiegel
@@ -39,57 +44,51 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= M_PI*1e-2*1.1234125235345; // The random number ensures that the time step is not a multiple of any other frequency.
-	integrator_epsilon = 1e-2;	// Accuracy
-	boxsize 	= 25;
-	tmax		= 1.6e4;
+	dt 			= M_PI*1e-2; 	// initial timestep
+	integrator_epsilon 	= 1e-2;		// accuracy patameter
+	boxsize 		= 25;
+	tmax			= 1.6e4;
 #ifdef OPENGL
-	display_wire	= 1; // Show istantaneous orbits..
+	display_wire	= 1; 			// show istantaneous orbits.
 #endif // OPENGL
 	init_box();
 
 	// Initial conditions
-	struct particle p; 
 	
-	// Star
-	p.m  = 1;
-	// The WH integrator assumes a heliocentric coordinate system. 
-	// Therefore the star has to be at the origin. 
-	p.x  = 0; p.y  = 0; p.z  = 0; 
-	p.vx = 0; p.vy = 0; p.vz = 0;
-	p.ax = 0; p.ay = 0; p.az = 0;
-	particles_add(p); 
+	struct particle star; 
+	star.m  = 1;
+	star.x  = 0; star.y  = 0; star.z  = 0; 
+	star.vx = 0; star.vy = 0; star.vz = 0;
+	particles_add(star); 
 	
-	// Test particle
-	// Actually this is treated as a 'massive particle with zero mass'.
-	// This ensures correct ordering of Jacobi coordinates in the WH integrator. 
-	p.m  = 0;
+	// The planet (a zero mass test particle)
+	struct particle planet; 
+	planet.m  = 0;
 	double e_testparticle = 0;
-	p.x  = 1.-e_testparticle; p.y  = 0; p.z  = 0; 
-	p.vx = 0; p.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)); p.vz = 0;
-	p.ax = 0; p.ay = 0; p.az = 0;
-	particles_add(p); 
+	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
+	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
+	particles_add(planet); 
 	
-	// Perturber
-	p.x  = 10; p.y  = 0; p.z  = 0; 
+	// The perturber
+	struct particle perturber; 
+	perturber.x  = 10; perturber.y  = 0; perturber.z  = 0; 
 	double inc_perturber = 89.9;
-	p.vx = 0; 
-	p.m  = 1;
-	p.vy = cos(inc_perturber/180.*M_PI)*sqrt((1.+p.m)/p.x); 
-	p.vz = sin(inc_perturber/180.*M_PI)*sqrt((1.+p.m)/p.x); 
-	p.ax = 0; p.ay = 0; p.az = 0;
-	particles_add(p); 
+	perturber.vx = 0; 
+	perturber.m  = 1;
+	perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt((star.m+perturber.m)/perturber.x); 
+	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt((star.m+perturber.m)/perturber.x); 
+	particles_add(perturber); 
 
 	tools_move_to_center_of_momentum();
 	
-	system("rm -v orbits.txt");	
+	system("rm -v orbits.txt");		// delete previous output file
 }
 
 void problem_inloop(){
-	if(output_check(4000.*dt)){
+	if(output_check(4000.*dt)){		// outputs to the screen
 		output_timing();
 	}
-	if(output_check(12.)){
+	if(output_check(12.)){			// outputs to a file
 		output_append_orbits("orbits.txt");
 	}
 }
