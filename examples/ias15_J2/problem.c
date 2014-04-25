@@ -95,18 +95,18 @@ void force_J2(){
 #pragma omp parallel for
 	for (int i=1;i<N;i++){
 		const struct particle p = particles[i]; 	// cache
-		const double sprx  = p.x-planet.x;
-		const double spry  = p.y-planet.y;
-		const double sprz  = p.z-planet.z;
+		const double sprx = p.x-planet.x;
+		const double spry = p.y-planet.y;
+		const double sprz = p.z-planet.z;
 		const double prx  = sprx*cos(-ObliquityPlanet) + sprz*sin(-ObliquityPlanet);
 		const double pry  = spry;
 		const double prz  =-sprx*sin(-ObliquityPlanet) + sprz*cos(-ObliquityPlanet);
-		const double pr2   = prx*prx + pry*pry + prz*prz; 		// distance^2 relative to planet
+		const double pr2  = prx*prx + pry*pry + prz*prz; 		// distance^2 relative to planet
 		const double fac  = 3.*G*J2planet*planet.m*Rplanet*Rplanet/2./pow(pr2,3.5);
 
-		const double pax = fac*prx*(prx*prx + pry*pry - 4.*prz*prz);
-		const double pay = fac*pry*(prx*prx + pry*pry - 4.*prz*prz);
-		const double paz = fac*prz*(3.*(prx*prx + pry*pry) - 2.*prz*prz);
+		const double pax  = fac*prx*(prx*prx + pry*pry - 4.*prz*prz);
+		const double pay  = fac*pry*(prx*prx + pry*pry - 4.*prz*prz);
+		const double paz  = fac*prz*(3.*(prx*prx + pry*pry) - 2.*prz*prz);
 		
 		particles[i].ax += pax*cos(ObliquityPlanet) + paz*sin(ObliquityPlanet);
 		particles[i].ay += pay;
