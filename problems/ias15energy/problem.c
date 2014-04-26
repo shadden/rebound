@@ -47,46 +47,67 @@ double energy_max = 0;
 double ecc =0;
 extern double integrator_epsilon;
 extern double integrator_error;
+double timing_start;
+double timing_stop;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
 
 	// Setup homog. sphere
 	tmax		= 1e4*sqrt(2.)*M_PI;
-	dt		= sqrt(2.)*M_PI/input_get_double(argc,argv,"timesteps",1000);
-	integrator_epsilon = input_get_double(argc,argv,"epsilon",0);
+	dt		= tmax/input_get_double(argc,argv,"timesteps",1000);
+#ifdef INTEGRATOR_IAS15
+	//integrator_epsilon = input_get_double(argc,argv,"epsilon",0);
+#endif // INTEGRATOR_IAS15
 	boxsize = 500;	
 	init_box();
 
+	ecc=input_get_double(argc,argv,"e",0);
 
-	// test particle 
-	struct particle p1;
-	p1.x = 0.0; 
-	p1.y = 0.0; 
-	p1.z = 0; 
-	p1.vx = 0; 
-	p1.vy = 0.; 
-	p1.vz = 0; 
-	p1.m = 1;
-	particles_add(p1);
+	// star
+	struct particle star;
+	star.x = 0.0; 
+	star.y = 0.0; 
+	star.z = 0; 
+	star.vx = 0; 
+	star.vy = 0.; 
+	star.vz = 0; 
+	star.m = 1;
+	particles_add(star);
 	
 	{
-		ecc=input_get_double(argc,argv,"e",0);
 		struct particle p2;
 		p2.x = 1.+ecc; 
 		p2.y = 0; 
 		p2.z = 0; 
 		p2.vx = 0; 
-		p2.vy = sqrt((1.-ecc)/(1.+ecc)*2./p2.x); 
+		p2.vy = sqrt((1.-ecc)/(1.+ecc)*1./p2.x); 
 		p2.vz = 0; 
-		p2.m = 1;
+		p2.m = 1e-3;
+		particles_add(p2);
+ 	}
+	{
+		struct particle p2;
+		p2.x = 2.+ecc; 
+		p2.y = 0; 
+		p2.z = 0; 
+		p2.vx = 0; 
+		p2.vy = sqrt((1.-ecc)/(1.+ecc)*1./p2.x); 
+		p2.vz = 0; 
+		p2.m = 1e-3;
 		particles_add(p2);
  	}
 
+#ifndef INTEGRATOR_WH
 	tools_move_to_center_of_momentum();
+#endif // INTEGRATOR_WH
 	mpf_set_default_prec(512);
 	energy_init = energy();
-	system("rm energy.txt");
+	
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	timing_start = tim.tv_sec+(tim.tv_usec/1000000.0);
 }
 
 double energy(){
@@ -94,6 +115,31 @@ double energy(){
 	mpf_init(energy_kinetic);
 	mpf_t energy_potential;
 	mpf_init(energy_potential);
+	mpf_t mass;
+	mpf_init(mass);
+	mpf_t vx;
+	mpf_init(vx);
+	mpf_t vy;
+	mpf_init(vy);
+	mpf_t vz;
+	mpf_init(vz);
+	for (int i=0;i<N;i++){
+		mpf_t temp;
+		mpf_init(temp);
+		mpf_set_d(temp,particles[i].vx*particles[i].m);
+		mpf_add(vx, vx, temp);
+		mpf_set_d(temp,particles[i].vy*particles[i].m);
+		mpf_add(vy, vy, temp);
+		mpf_set_d(temp,particles[i].vz*particles[i].m);
+		mpf_add(vz, vz, temp);
+
+		mpf_set_d(temp,particles[i].m);
+		mpf_add(mass, mass, temp);
+	}
+	mpf_div(vx,vx,mass);
+	mpf_div(vy,vy,mass);
+	mpf_div(vz,vz,mass);
+
 	for (int i=0;i<N;i++){
 		for (int j=0;j<i;j++){
 			double dx = particles[i].x - particles[j].x;
@@ -106,13 +152,16 @@ double energy(){
 			mpf_add(energy_potential, energy_potential,temp);
 			
 		}
-		double dvx = particles[i].vx;
-		double dvy = particles[i].vy;
-		double dvz = particles[i].vz;
+	
+		double dvx = particles[i].vx-mpf_get_d(vx);
+		double dvy = particles[i].vy-mpf_get_d(vy);
+		double dvz = particles[i].vz-mpf_get_d(vz);
 		mpf_t temp;
 		mpf_init(temp);
+		
 		mpf_set_d(temp,1./2.*particles[i].m * (dvx*dvx + dvy*dvy + dvz*dvz));
 		mpf_add(energy_kinetic, energy_kinetic,temp);
+		
 	}
 	mpf_add(energy_kinetic,energy_kinetic,energy_potential);
 
@@ -128,42 +177,27 @@ void problem_finish(){
 	FILE* of = fopen("energy_leapfrog.txt","a+"); 
 #endif
 #ifdef INTEGRATOR_IAS15
-	FILE* of = fopen("energy_radau15.txt","a+"); 
+	FILE* of = fopen("energy_ias15.txt","a+"); 
+#endif
+#ifdef INTEGRATOR_WH
+	FILE* of = fopen("energy_wh.txt","a+"); 
 #endif
 	fprintf(of,"%e\t",dt);
 	fprintf(of,"%e\t",integrator_epsilon);
 	fprintf(of,"%e\t",ecc);
-//	double en = fabs((energy()-energy_init)/energy_init);
-	double en = energy_max;
-	fprintf(of,"%e\t",en);
+	fprintf(of,"%e\t",energy_max);
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	timing_stop = tim.tv_sec+(tim.tv_usec/1000000.0);
+	fprintf(of,"%e\t",timing_stop-timing_start);
 	fprintf(of,"\n");
 	fclose(of);
-//	fprintf(ofe,"\n");
-//	fclose(ofe);
-//	if (N==2){
-//		system("cat energy.txt >> energy.plot");
-//	}else{
-//		system("rm energy.txt");
-//	}
 }
-double outputnum=0;
-double outputnum_max=1024;
-void problem_output(){
-	double en = fabs((energy()-energy_init)/energy_init);
-	if (en>energy_max) energy_max = en;
 
-//	if(output_check(tmax/10000)){
-//		output_timing();
-//		if (ofe==NULL){
-//			ofe= fopen("energy.txt","a+"); 
-//		}
-//		fprintf(ofe,"%e\t",t);
-//		fprintf(ofe,"%e\t",dt);
-//		fprintf(ofe,"%e\t",integrator_epsilon);
-//		fprintf(ofe,"%e\t",integrator_error);
-//		fprintf(ofe,"%e\t",fabs((energy()-energy_init)/energy_init));
-//		fprintf(ofe,"\n");
-//		outputnum++;
-//	}
+void problem_output(){
+	if(output_check(tmax/10000)){
+		double en = fabs((energy()-energy_init)/energy_init);
+		if (en>energy_max) energy_max = en;
+	}
 }
 
