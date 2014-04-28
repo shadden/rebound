@@ -1,9 +1,9 @@
 #!/bin/gnuplot
 set output "plot.pdf"
-set terminal pdf enhanced dashed size 4 in,3 in
+set terminal pdf enhanced size 4 in,3 in
 set xlabel "simulation time [orbits]"
 set ylabel "relative energy error"
-set st d lp
+set st d l
 set key bottom right
 set yrange [-16:-2]
 set autoscale fix
