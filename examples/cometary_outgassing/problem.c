@@ -186,9 +186,9 @@ void relativity_correction_force(){
     double gamma = 4.*(dvx*dx + dvy*dy + dvz*dz);
     
     // add acceleration to comet
-    com->ax = alpha * (beta*dx + gamma*dvx);
-    com->ay = alpha * (beta*dy + gamma*dvy);
-    com->az = alpha * (beta*dz + gamma*dvz);
+    com->ax += alpha * (beta*dx + gamma*dvx);
+    com->ay += alpha * (beta*dy + gamma*dvy);
+    com->az += alpha * (beta*dz + gamma*dvz);
 }
 
 void additional_force(){
