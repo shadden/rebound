@@ -75,10 +75,12 @@ const double k   = 0.01720209895; // Gaussian constant
 #ifdef OPENGL
     extern int display_wire;
 #endif // OPENGL
+extern double integrator_epsilon; 
 
 void problem_init(int argc, char* argv[]){
     // Setup integration parameters
     dt          = 0.05; // days
+    integrator_epsilon = 1e-3;
     tmax        = 3.652422e6; // 10^4 yr
     N_active    = 13;  // "massive" object
     G           = k*k;
