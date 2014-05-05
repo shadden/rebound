@@ -45,7 +45,7 @@ extern int display_wire;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 			= M_PI*1e-4; 	// initial timestep
-	integrator_epsilon 	= 1e-5;		// accuracy patameter
+	integrator_epsilon 	= 1e-8;		// accuracy patameter
 	boxsize 		= 25;
 	tmax			= 1.6e4;
 #ifdef OPENGL

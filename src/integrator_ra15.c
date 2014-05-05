@@ -51,12 +51,7 @@ double 	integrator_epsilon 			= 0;	// Magnitude of last term in series expansion
 							// Play with integrator_epsilon to make sure you get a converged results. 
 							// The true fractional error is often many orders of magnitude smaller.
 							// If it is zero, then a constant timestep is used (default). 
-int	integrator_epsilon_global		= 1;	// if 1: estimate the fractional error by max(acceleration_error)/max(acceleration), where max is take over all particles.
 							// if 0: estimate the fractional error by max(acceleration_error/acceleration).
-double 	integrator_min_dt 			= 0;	// Minimum timestep used as a floor when adaptive timestepping is enabled.
-double	integrator_error			= 0;	// Error estimate in last timestep (used for debugging only)
-unsigned int integrator_iterations_max		= 10;	// Maximum number of iterations in predictor/corrector loop
-unsigned long integrator_iterations_max_exceeded= 0;	// Count how many times the iteration did not converge
 
 
 const double h[8]	= { 0.0, 0.05626256053692215, 0.18024069173689236, 0.35262471711316964, 0.54715362633055538, 0.73421017721541053, 0.88532094683909577, 0.97752061356128750}; // Gauss Radau spacings
@@ -129,6 +124,7 @@ void integrator_part2(){
 	// Try until a step was successful.
 	while(!integrator_ias15_step());
 }
+int step = 0;
  
 int integrator_ias15_step() {
 	const int N3 = 3*N;
@@ -177,19 +173,8 @@ int integrator_ias15_step() {
 		g[6][k] = b[6][k];
 	}
 
-	double predictor_corrector_error = 1;
-	int iterations = 0;
-	while(predictor_corrector_error>1e-10){						// Predictor corrector loop
-		if (iterations>=integrator_iterations_max){
-			integrator_iterations_max_exceeded++;
-			const int integrator_iterations_warning = 1;
-			if (integrator_iterations_max_exceeded==integrator_iterations_warning && integrator_epsilon==0.){
-				fprintf(stderr,"\n\033[1mWarning!\033[0m At least %d predictor corrector loops in integrator_ias15.c did not converge. This is typically an indication of the timestep being too large.\n",integrator_iterations_warning);
-			}
-			break;								// Quit predictor corrector loop
-		}
-		predictor_corrector_error = 0;
-		iterations++;
+
+	for(int iter=0;iter< (step==0?6:2); iter++){
 
 		for(int n=1;n<8;n++) {							// Loop over interval using Gauss-Radau spacings
 
@@ -319,15 +304,8 @@ int integrator_ias15_step() {
 						b[5][k] += tmp * c[20];
 						b[6][k] += tmp;
 						
-						// Monitor change in b[6][k]/a[k]. The iteration is converged if it is close to 0.
-						//double fabstmp = fabs(tmp/a[k]);
-						double fabstmp = fabs(tmp/b[6][k]);
-						if (fabstmp>predictor_corrector_error && isfinite(fabstmp)){
-							predictor_corrector_error = fabstmp;
-						}
 					} break;
 			}
-		//	if (n==7 && iterations>7)printf("%d %e\n",iterations,predictor_corrector_error);
 		}
 	}
 		//	printf("\n");
@@ -345,6 +323,11 @@ int integrator_ias15_step() {
 		dt = pow(tol/temp,1./9.);
 	}
 
+	if (step==0 && fabs(dt/dt_done)<1.){
+		dt = 0.8*dt;
+		return 0;
+	}
+
 	if (dt/dt_done > 1.4) dt= dt_done*1.4;
 	
 
@@ -359,6 +342,7 @@ int integrator_ias15_step() {
 	}
 
 	t += dt_done;
+	step++;
 	// Swap particle buffers
 	particles = particles_in;
 
