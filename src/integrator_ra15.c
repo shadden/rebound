@@ -333,10 +333,10 @@ int integrator_ias15_step() {
 		//	printf("\n");
 	const double dt_done = dt;
 
-	double tol = 1e-2;
+	double tol = integrator_epsilon;
 	double temp = 0;
 	for(int k=0;k<N3;++k) {
-		temp = MAX(temp,fabs(b[6][k]));
+		temp = fmax(temp,fabs(b[6][k]));
 	}
 	temp = temp/(72.*pow(dt,7.));
 	if (temp==0.){
