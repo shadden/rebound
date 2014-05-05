@@ -332,66 +332,21 @@ int integrator_ias15_step() {
 	}
 		//	printf("\n");
 	const double dt_done = dt;
-	//printf(" iterations = %d\n",iterations);
-	
-	const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
-	
-	if (integrator_epsilon>0){
-		// Estimate error (given by last term in series expansion) 
-		// There are two options:
-		// integrator_epsilon_global==1  (default)
-		//   First, we determine the maximum acceleration and the maximum of the last term in the series. 
-		//   Then, the two are divided.
-		// integrator_epsilon_global==0
-		//   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
-		//   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
-		integrator_error = 0.0;
-		if (integrator_epsilon_global){
-			double maxak = 0.0;
-			double maxb6k = 0.0;
-			for(int k=0;k<N3;k++) {  // Looping over all particles and all 3 components of the acceleration. 
-				const double ak  = fabs(a[k]);
-				if (isnormal(ak) && ak>maxak){
-					maxak = ak;
-				}
-				const double b6k = fabs(b[6][k]); 
-				if (isnormal(b6k) && b6k>maxb6k){
-					maxb6k = b6k;
-				}
-			}
-			integrator_error = maxb6k/maxak;
-		}else{
-			for(int k=0;k<N3;k++) {
-				const double ak  = a[k];
-				const double b6k = b[6][k]; 
-				const double errork = fabs(b6k/ak);
-				if (isnormal(errork) && errork>integrator_error){
-					integrator_error = errork;
-				}
-			}
-		}
 
-		double dt_new = dt_done/safety_factor; // By default, increase timestep a little
-		if  (isnormal(integrator_error)){
-			// if error estimate is available increase by more educated guess
-		 	dt_new = pow(integrator_epsilon/integrator_error,1./7.)*dt_done;
-			// Add a safety factor to make sure we do not need to repeat timestep
-			dt_new *= safety_factor;  
-		}
-		
-		if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
-		
-		if (fabs(dt_new/dt_done) < 1.0) {	// New timestep is smaller.
-			if (dt_done>integrator_min_dt){
-				particles = particles_in;
-				dt = dt_new;
-				return 0; // Step rejected. Do again. 
-			}
-		}else{					// New timestep is larger.
-			if (dt_new/dt_done > 1./safety_factor) dt_new = dt_done /safety_factor;	// Don't increase the timestep by too much compared to the last one.
-		}
-		dt = dt_new;
+	double tol = 1e-2;
+	double temp = 0;
+	for(int k=0;k<N3;++k) {
+		temp = MAX(temp,fabs(b[6][k]));
 	}
+	temp = temp/(72.*pow(dt,7.));
+	if (temp==0.){
+		dt = dt_done*1.4;
+	}else{
+		dt = pow(tol/temp,1./9.);
+	}
+
+	if (dt/dt_done > 1.4) dt= dt_done*1.4;
+	
 
 	// Find new position and velocity values at end of the sequence
 	const double dt_done2 = dt_done * dt_done;
