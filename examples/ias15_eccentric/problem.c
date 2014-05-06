@@ -44,47 +44,50 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 			= M_PI*1e-4; 	// initial timestep
-	integrator_epsilon 	= 1e-8;		// accuracy patameter
-	boxsize 		= 25;
-	tmax			= 1.6e4;
+	integrator_epsilon 	= 1e-12;		// accuracy patameter
+	
 #ifdef OPENGL
 	display_wire	= 1; 			// show istantaneous orbits.
 #endif // OPENGL
-	init_box();
 
-	// Initial conditions
+
+	double e_testparticle = 1.-1e-3;
+	double mass_scale	= 0.001;
+	double size_scale	= 1;
+
+
+	boxsize 		= 25.*size_scale;
+	init_box();
 	
 	struct particle star; 
-	star.m  = 1;
+	star.m  = mass_scale;
 	star.x  = 0; star.y  = 0; star.z  = 0; 
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	particles_add(star); 
 	
-	// The planet (a zero mass test particle)
 	struct particle planet; 
 	planet.m  = 0;
-	double e_testparticle = 1.-1e-2;
-	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
-	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
+	planet.x  = size_scale*(1.-e_testparticle); planet.y  = 0; planet.z  = 0; 
+	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale); planet.vz = 0;
 	particles_add(planet); 
 	
 	tools_move_to_center_of_momentum();
 	
-	system("rm -v orbits.txt");		// delete previous output file
+	dt 			= 1e-4*sqrt(size_scale*size_scale*size_scale/mass_scale); 
+	tmax			= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale);
+	
 }
 
 void problem_inloop(){
-	if(output_check(4000.*dt)){		// outputs to the screen
+	if(output_check(tmax/100.)){		// outputs to the screen
 		output_timing();
-	}
-	if(output_check(12.)){			// outputs to a file
-		output_append_orbits("orbits.txt");
 	}
 }
 
 void problem_output(){
-	printf("%e\n",dt);
+	FILE* of = fopen("timestep.txt","a"); 
+	fprintf(of,"%e\t%e\t\n",t/tmax,dt/tmax);
+	fclose(of);
 }
 
 void problem_finish(){
