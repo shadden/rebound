@@ -315,6 +315,9 @@ int integrator_ias15_step() {
 						b[5][k] += tmp;
 					} break;
 				case 7:
+				{
+					double maxak = 0.0;
+					double maxb6ktmp = 0.0;
 					for(int k=0;k<N3;++k) {
 						double tmp = g[6][k];
 						double gk = a[k] - a1[k];
@@ -328,21 +331,36 @@ int integrator_ias15_step() {
 						b[5][k] += tmp * c[20];
 						b[6][k] += tmp;
 						
-						// Monitor change in b[6][k]/a[k]. The iteration is converged if it is close to 0.
-						//double fabstmp = fabs(tmp/a[k]);
-						double fabstmp = fabs(tmp/b[6][k]);
-						if (fabstmp>predictor_corrector_error && isfinite(fabstmp)){
-							predictor_corrector_error = fabstmp;
+						// Monitor change in b[6][k] relative to a[k]. The predictor corrector scheme is converged if it is close to 0.
+						if (integrator_epsilon_global){
+							const double ak  = fabs(a[k]);
+							if (isnormal(ak) && ak>maxak){
+								maxak = ak;
+							}
+							const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+							if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+								maxb6ktmp = b6ktmp;
+							}
+						}else{
+							const double ak  = a[k];
+							const double b6ktmp = tmp; 
+							const double errork = fabs(b6ktmp/ak);
+							if (isnormal(errork) && errork>integrator_error){
+								predictor_corrector_error = errork;
+							}
 						}
-					} break;
+					} 
+					if (integrator_epsilon_global){
+						predictor_corrector_error = maxb6ktmp/maxak;
+					}
+					
+					break;
+				}
 			}
-		//	if (n==7 && iterations>7)printf("%d %e\n",iterations,predictor_corrector_error);
 		}
 	}
-		//	printf("\n");
+	// Find new timestep
 	const double dt_done = dt;
-	//printf(" iterations = %d\n",iterations);
-	
 	const double safety_factor = 0.75;  // Empirically chosen so that timestep are occasionally rejected but not too often.
 	
 	if (integrator_epsilon>0){
