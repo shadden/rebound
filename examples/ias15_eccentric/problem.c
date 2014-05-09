@@ -44,7 +44,7 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator_epsilon 	= 1e-12;		// accuracy patameter
+	integrator_epsilon 	= 1e-3;		// accuracy patameter
 	
 #ifdef OPENGL
 	display_wire	= 1; 			// show istantaneous orbits.
