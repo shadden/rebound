@@ -133,8 +133,8 @@ Then, type
 This will do the following things    
 
 * It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). 
-* It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions, integrators and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c`. 
-* It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.
+* It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions, integrators and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change `gravity_tree.c` to `gravity_direct.c` in the Makefile. 
+* It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in `src/` when you start working on a new problem unless you want to do something very special. This keeps the problem specific initial conditions and the reusable part of code itself nicely separated.
 * It compiles the code and copies the binary into the current directory.
 
 If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains `OPENGL` in the makefile. Of course, you will not see much unless you put in some extra work to visualize the results.
@@ -145,7 +145,7 @@ To finally run the code, simply type
 
     ./nbody
 
-A window should open and you will see a simulation running in real time. The setup simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples too and you will quickly get an impression of what REBOUND can do. 
+A window should open and you will see a simulation running in real time. The problem in the directory `examples/shearing_sheet/` simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. 
 
 If you want to create your own problem, just copy one of the example directories or the template in the `problems` directory. Then simply modify `problem.c` and `Makefile` accordingly.  
 
@@ -218,6 +218,13 @@ Make sure you set the function pointer in the `problem_init()` routine:
 ```c
 	problem_additional_forces = velocity_dependent_force;
 ```
+
+By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
+
+```c
+        integrator_force_is_velocitydependent = 0;
+```
+
 
 #### void problem_output() ####
 This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See `output.h` for more details. The function `output_check(odt)` can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:
