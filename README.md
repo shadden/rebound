@@ -7,17 +7,22 @@ Contributors
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 
-Paper
+Papers
 ----- 
 
-The paper Rein & Liu 2012 describing this code has been accepted for publication by Astronomy and Astrophysics on 6 November 2011 and has been published as article A128 in A&A Volume 537 2012. A freely available preprint can be found on the arXiv at http://arxiv.org/abs/1110.4876.
+There are two papers describing the functionality of REBOUND. 
 
-On YouTube, http://youtu.be/gaExPGW1WzI?hd=1, you can find a promo video on how to download and install REBOUND. 
+The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
+
+The second paper, Rein & Spiegel (in preparation) describes versatile high order integrator IAS15 which is now part of REBOUND. 
+
 
 Screenshot
 ---------- 
  
 ![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
+
+You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
 
 Available modules
 -----------------
