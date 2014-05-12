@@ -216,13 +216,13 @@ void velocity_dependent_force(){
 Make sure you set the function pointer in the `problem_init()` routine:
 
 ```c
-	problem_additional_forces = velocity_dependent_force;
+problem_additional_forces = velocity_dependent_force;
 ```
 
 By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in `integrator.h`) to `0` to speed up the calculation:
 
 ```c
-        integrator_force_is_velocitydependent = 0;
+integrator_force_is_velocitydependent = 0;
 ```
 
 
