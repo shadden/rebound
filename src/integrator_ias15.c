@@ -80,9 +80,9 @@ int integrator_ias15_init_done 	= 0;	// Calculate coefficients once.
 double* x   = NULL;	// Temporary buffer for position
 double* v   = NULL;	//                      velocity
 double* a   = NULL;	//                      acceleration
-double* x1  = NULL;	// Temporary buffer for position
-double* v1  = NULL;	//                      velocity
-double* a1  = NULL;	//                      acceleration
+double* xi  = NULL;	// Temporary buffer for position
+double* vi  = NULL;	//                      velocity
+double* ai  = NULL;	//                      acceleration
 
 double* g[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
 double* b[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL} ;
@@ -154,9 +154,9 @@ int integrator_ias15_step() {
 		x = realloc(x,sizeof(double)*N3);
 		v = realloc(v,sizeof(double)*N3);
 		a = realloc(a,sizeof(double)*N3);
-		x1 = realloc(x1,sizeof(double)*N3);
-		v1 = realloc(v1,sizeof(double)*N3);
-		a1 = realloc(a1,sizeof(double)*N3);
+		xi = realloc(xi,sizeof(double)*N3);
+		vi = realloc(vi,sizeof(double)*N3);
+		ai = realloc(ai,sizeof(double)*N3);
 		particles_out = realloc(particles_out,sizeof(struct particle)*N);
 		N3allocated = N3;
 	}
@@ -165,15 +165,15 @@ int integrator_ias15_step() {
 	// integrator_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
 	for(int k=0;k<N;k++) {
-		x1[3*k]   = particles[k].x;
-		x1[3*k+1] = particles[k].y;
-		x1[3*k+2] = particles[k].z;
-		v1[3*k]   = particles[k].vx;
-		v1[3*k+1] = particles[k].vy;
-		v1[3*k+2] = particles[k].vz;
-		a1[3*k]   = particles[k].ax;
-		a1[3*k+1] = particles[k].ay;  
-		a1[3*k+2] = particles[k].az;
+		xi[3*k]   = particles[k].x;
+		xi[3*k+1] = particles[k].y;
+		xi[3*k+2] = particles[k].z;
+		vi[3*k]   = particles[k].vx;
+		vi[3*k+1] = particles[k].vy;
+		vi[3*k+2] = particles[k].vz;
+		ai[3*k]   = particles[k].ax;
+		ai[3*k+1] = particles[k].ay;  
+		ai[3*k+2] = particles[k].az;
 	}
 
 	for(int k=0;k<N3;k++) {
@@ -213,7 +213,7 @@ int integrator_ias15_step() {
 			s[8] = s[7] * h[n] * 0.7777777777777778;
 
 			for(int k=0;k<N3;k++) {						// Predict positions at interval n using b values
-				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*a1[k] + s[0]*v1[k] + x1[k];
+				x[k] = 	s[8]*b[6][k] + s[7]*b[5][k] + s[6]*b[4][k] + s[5]*b[3][k] + s[4]*b[2][k] + s[3]*b[1][k] + s[2]*b[0][k] + s[1]*ai[k] + s[0]*vi[k] + xi[k];
 			}
 			
 			if (integrator_force_is_velocitydependent){
@@ -227,7 +227,7 @@ int integrator_ias15_step() {
 				s[7] = s[6] * h[n] * 0.875;
 
 				for(int k=0;k<N3;k++) {					// Predict velocities at interval n using b values
-					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*a1[k] + v1[k];
+					v[k] =  s[7]*b[6][k] + s[6]*b[5][k] + s[5]*b[4][k] + s[4]*b[3][k] + s[3]*b[2][k] + s[2]*b[1][k] + s[1]*b[0][k] + s[0]*ai[k] + vi[k];
 				}
 			}
 
@@ -256,13 +256,13 @@ int integrator_ias15_step() {
 				case 1: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g[0][k];
-						g[0][k]  = (a[k] - a1[k]) * r[0];
+						g[0][k]  = (a[k] - ai[k]) * r[0];
 						b[0][k] += g[0][k] - tmp;
 					} break;
 				case 2: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g[1][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[1][k] = (gk*r[1] - g[0][k])*r[2];
 						tmp = g[1][k] - tmp;
 						b[0][k] += tmp * c[0];
@@ -271,7 +271,7 @@ int integrator_ias15_step() {
 				case 3: 
 					for(int k=0;k<N3;++k) {
 						double tmp = g[2][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[2][k] = ((gk*r[3] - g[0][k])*r[4] - g[1][k])*r[5];
 						tmp = g[2][k] - tmp;
 						b[0][k] += tmp * c[1];
@@ -281,7 +281,7 @@ int integrator_ias15_step() {
 				case 4:
 					for(int k=0;k<N3;++k) {
 						double tmp = g[3][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[3][k] = (((gk*r[6] - g[0][k])*r[7] - g[1][k])*r[8] - g[2][k])*r[9];
 						tmp = g[3][k] - tmp;
 						b[0][k] += tmp * c[3];
@@ -292,7 +292,7 @@ int integrator_ias15_step() {
 				case 5:
 					for(int k=0;k<N3;++k) {
 						double tmp = g[4][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[4][k] = ((((gk*r[10] - g[0][k])*r[11] - g[1][k])*r[12] - g[2][k])*r[13] - g[3][k])*r[14];
 						tmp = g[4][k] - tmp;
 						b[0][k] += tmp * c[6];
@@ -304,7 +304,7 @@ int integrator_ias15_step() {
 				case 6:
 					for(int k=0;k<N3;++k) {
 						double tmp = g[5][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[5][k] = (((((gk*r[15] - g[0][k])*r[16] - g[1][k])*r[17] - g[2][k])*r[18] - g[3][k])*r[19] - g[4][k])*r[20];
 						tmp = g[5][k] - tmp;
 						b[0][k] += tmp * c[10];
@@ -320,7 +320,7 @@ int integrator_ias15_step() {
 					double maxb6ktmp = 0.0;
 					for(int k=0;k<N3;++k) {
 						double tmp = g[6][k];
-						double gk = a[k] - a1[k];
+						double gk = a[k] - ai[k];
 						g[6][k] = ((((((gk*r[21] - g[0][k])*r[22] - g[1][k])*r[23] - g[2][k])*r[24] - g[3][k])*r[25] - g[4][k])*r[26] - g[5][k])*r[27];
 						tmp = g[6][k] - tmp;	
 						b[0][k] += tmp * c[15];
@@ -423,10 +423,10 @@ int integrator_ias15_step() {
 	// Find new position and velocity values at end of the sequence
 	const double dt_done2 = dt_done * dt_done;
 	for(int k=0;k<N3;++k) {
-		x1[k] += (xc[7]*b[6][k] + xc[6]*b[5][k] + xc[5]*b[4][k] + xc[4]*b[3][k] + xc[3]*b[2][k] + xc[2]*b[1][k] + xc[1]*b[0][k] + xc[0]*a1[k]) 
-			* dt_done2 + v1[k] * dt_done;
+		xi[k] += (xc[7]*b[6][k] + xc[6]*b[5][k] + xc[5]*b[4][k] + xc[4]*b[3][k] + xc[3]*b[2][k] + xc[2]*b[1][k] + xc[1]*b[0][k] + xc[0]*ai[k]) 
+			* dt_done2 + vi[k] * dt_done;
 
-		v1[k] += (vc[6]*b[6][k] + vc[5]*b[5][k] + vc[4]*b[4][k] + vc[3]*b[3][k] + vc[2]*b[2][k] + vc[1]*b[1][k] + vc[0]*b[0][k] + a1[k])
+		vi[k] += (vc[6]*b[6][k] + vc[5]*b[5][k] + vc[4]*b[4][k] + vc[3]*b[3][k] + vc[2]*b[2][k] + vc[1]*b[1][k] + vc[0]*b[0][k] + ai[k])
 			* dt_done;
 	}
 
@@ -435,13 +435,13 @@ int integrator_ias15_step() {
 	particles = particles_in;
 
 	for(int k=0;k<N;++k) {
-		particles[k].x = x1[3*k+0];	// Set final position
-		particles[k].y = x1[3*k+1];
-		particles[k].z = x1[3*k+2];
+		particles[k].x = xi[3*k+0];	// Set final position
+		particles[k].y = xi[3*k+1];
+		particles[k].z = xi[3*k+2];
 
-		particles[k].vx = v1[3*k+0];	// Set final velocity
-		particles[k].vy = v1[3*k+1];
-		particles[k].vz = v1[3*k+2];
+		particles[k].vx = vi[3*k+0];	// Set final velocity
+		particles[k].vy = vi[3*k+1];
+		particles[k].vz = vi[3*k+2];
 	}
 
 
