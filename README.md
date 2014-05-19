@@ -39,6 +39,8 @@ This setup allows you to work on multiple projects at the same time using differ
      <td>No self-gravity</td></tr>
   <tr><td><pre>gravity_direct.c     </pre></td>
      <td>Direct summation, O(N^2)</td></tr>
+  <tr><td><pre>gravity_opencl.c     </pre></td>
+     <td>Direct summation, O(N^2), but accelerated using the OpenCL framework. </td></tr>
   <tr><td><pre>gravity_tree.c       </pre></td>
      <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
   <tr><td><pre>gravity_grape.c      </pre></td>
@@ -160,8 +162,8 @@ You can also install freeglut in a non-default installation directory if you do 
 
 Then, add the following lines to the REBOUND Makefile
 
-    OPT += $(HOME)/local/include
-    LIB += $(HOME)/local/lib
+    OPT += -I$(HOME)/local/include
+    LIB += -L$(HOME)/local/lib
 
 Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set `OPENGL=0` in the makefile (see below). 
 
