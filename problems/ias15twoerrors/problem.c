@@ -51,7 +51,7 @@ void problem_init(int argc, char* argv[]){
 	G 		= 1;		
 
 	// Setup homog. sphere
-	tmax		= 1e1*2.*M_PI;
+	tmax		= 1e2*2.*M_PI;
 	dt			= tmax/input_get_double(argc,argv,"timesteps",1000);
 	integrator_epsilon	= input_get_double(argc,argv,"epsilon",0);
 	boxsize = 500;	
