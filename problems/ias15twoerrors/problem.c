@@ -46,6 +46,25 @@ double timing_start;
 double ecc;
 double timing_stop;
 
+
+double energy(){
+	double energy = 0;
+	struct particle p = particles[1];
+	double vx = p.vx;
+	double vy = p.vy;
+	double vz = p.vz;
+	double v2 = vx*vx + vy*vy + vz*vz;
+	energy += 0.5 *v2;
+	struct particle p2 = particles[0];
+	double rx = p.x-p2.x;
+	double ry = p.y-p2.y;
+	double rz = p.z-p2.z;
+	double r2 = rx*rx + ry*ry + rz*rz;
+	energy -= G*p.m/sqrt(r2);
+	return energy;
+}
+double energy_init;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	G 		= 1;		
@@ -85,11 +104,14 @@ void problem_init(int argc, char* argv[]){
 #ifndef INTEGRATOR_WH
 	tools_move_to_center_of_momentum();
 #endif // INTEGRATOR_WH
-	
+
+	energy_init = energy();	
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	timing_start = tim.tv_sec+(tim.tv_usec/1000000.0);
+
 }
+
 
 void problem_finish(){
 	struct timeval tim;
@@ -100,22 +122,31 @@ void problem_finish(){
 	FILE* of = fopen("energy_leapfrog.txt","a+"); 
 #endif
 #ifdef INTEGRATOR_IAS15
-	FILE* of = fopen("energy_ias15.txt","a+"); 
+	FILE* of;
+	if (integrator_epsilon>0){
+		of = fopen("energy_ias15variable.txt","a+"); 
+	}else{
+		of = fopen("energy_ias15.txt","a+"); 
+	}
 #endif
 #ifdef INTEGRATOR_WH
 	FILE* of = fopen("energy_wh.txt","a+"); 
 #endif
-	fprintf(of,"%e\t",dt/2./M_PI);
-	fprintf(of,"%.10e\t",t);
-	fprintf(of,"%e\t",integrator_epsilon);
-	fprintf(of,"%e\t",timing_stop - timing_start);
+	fprintf(of,"%e\t",dt/2./M_PI);					// 1 steps per orbit
+	fprintf(of,"%.10e\t",t);					// 2 t (tmax)
+	fprintf(of,"%e\t",integrator_epsilon);				// 3 epsilon
+	fprintf(of,"%e\t",timing_stop - timing_start);			// 4 timing
 	struct particle p = particles[1];
 	double r   = sqrt(p.x*p.x + p.y*p.y);
 	double x = cos(t);
 	double y = sin(t);
 	double phi2 = atan2(y,x); 
 	double phi = atan2(p.y,p.x); 
-	fprintf(of,"%.10e\t%.10e\t",r-1.-ecc, (phi-phi2)/(2.*M_PI));
+	fprintf(of,"%.10e\t",r-1.-ecc);					// 5 error off-track
+	fprintf(of,"%.10e\t",(phi-phi2)/(2.*M_PI));			// 6 error on-track
+	fprintf(of,"%e\t",tmax/dt);					// 7 Number of timesteps
+	double energy_final = energy();	
+	fprintf(of,"%e\t",(energy_final-energy_init)/energy_init);	// 8 Relagtive energy error (not for wh)
 	fprintf(of,"\n");
 	fclose(of);
 	printf("\n\nt=%.20f\n\n",t/2./M_PI);
