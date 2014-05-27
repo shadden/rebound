@@ -46,6 +46,14 @@ double timing_start;
 double ecc;
 double timing_stop;
 
+double velocity(){
+	struct particle p = particles[1];
+	double vx = p.vx;
+	double vy = p.vy;
+	double vz = p.vz;
+	double v2 = vx*vx + vy*vy + vz*vz;
+	return sqrt(v2);
+}
 
 double energy(){
 	double energy = 0;
@@ -64,6 +72,7 @@ double energy(){
 	return energy;
 }
 double energy_init;
+double velocity_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -106,6 +115,7 @@ void problem_init(int argc, char* argv[]){
 #endif // INTEGRATOR_WH
 
 	energy_init = energy();	
+	velocity_init = velocity();	
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
 	timing_start = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -146,7 +156,9 @@ void problem_finish(){
 	fprintf(of,"%.10e\t",(phi-phi2)/(2.*M_PI));			// 6 error on-track
 	fprintf(of,"%e\t",tmax/dt);					// 7 Number of timesteps
 	double energy_final = energy();	
+	double velocity_final = velocity();	
 	fprintf(of,"%e\t",(energy_final-energy_init)/energy_init);	// 8 Relagtive energy error (not for wh)
+	fprintf(of,"%e\t",(velocity_final-velocity_init)/velocity_init);	// 9 relative velocity error (not for wh)
 	fprintf(of,"\n");
 	fclose(of);
 	printf("\n\nt=%.20f\n\n",t/2./M_PI);
