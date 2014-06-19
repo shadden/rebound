@@ -37,7 +37,6 @@
 #include "output.h"
 #include "particle.h"
 #include "integrator.h"
-#include "input.h"
 
 #ifdef OPENGL
 extern int display_wire;
@@ -45,20 +44,19 @@ extern int display_wire;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	integrator_epsilon 	= 1e-6;		// accuracy patameter
+	integrator_epsilon 	= 1e-3;		// accuracy patameter
 	
 #ifdef OPENGL
 	display_wire	= 1; 			// show istantaneous orbits.
 #endif // OPENGL
 
 
-	double e_testparticle = 1.-1e-2;
-	double mass_scale = input_get_double(argc,argv,"mass_scale",0.);
-	double size_scale = input_get_double(argc,argv,"size_scale",0.);
+	double e_testparticle = 1.-1e-3;
+	double mass_scale	= 0.001;
+	double size_scale	= 1;
 
-	printf(" mass_scale: %lf\n size_scale: %lf\n",mass_scale,size_scale);
 
-	boxsize 		= 5.*size_scale;
+	boxsize 		= 25.*size_scale;
 	init_box();
 	
 	struct particle star; 
@@ -66,24 +64,17 @@ void problem_init(int argc, char* argv[]){
 	star.x  = 0; star.y  = 0; star.z  = 0; 
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	particles_add(star); 
-
-	// DSS comment: why doesn't it work with e close to 1.?
-	e_testparticle = 0;
 	
 	struct particle planet; 
 	planet.m  = 0;
-	planet.x  = size_scale*(1.-e_testparticle);
-	planet.y  = 0;
-	planet.z  = 0; 
-	planet.vx = 0;
-	planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale);
-	planet.vz = 0;
+	planet.x  = size_scale*(1.-e_testparticle); planet.y  = 0; planet.z  = 0; 
+	planet.vx = 0; planet.vy = sqrt((1.+e_testparticle)/(1.-e_testparticle)*mass_scale/size_scale); planet.vz = 0;
 	particles_add(planet); 
 	
 	tools_move_to_center_of_momentum();
 	
-	dt 	= 1e-15*sqrt(size_scale*size_scale*size_scale/mass_scale);  // start with small dt
-	tmax	= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale); // 1000 orbits
+	dt 			= 1e-4*sqrt(size_scale*size_scale*size_scale/mass_scale); 
+	tmax			= 1e2*2.*M_PI*sqrt(size_scale*size_scale*size_scale/mass_scale);
 	
 }
 
@@ -97,7 +88,6 @@ void problem_output(){
 	FILE* of = fopen("timestep.txt","a"); 
 	fprintf(of,"%e\t%e\t\n",t/tmax,dt/tmax);
 	fclose(of);
-	output_orbits("orbits.txt");
 }
 
 void problem_finish(){

@@ -36,37 +36,19 @@
 #include "tree.h"
 #include "tools.h"
 
-int count = 0;
-
 void problem_init(int argc, char* argv[]){
 	if (argc>1){ 						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}else{
-		boxsize = 10;
+		boxsize = 100;
 	}
 	init_box();
 	
 	struct particle pt;
-	double vv,mm,aa;
-
-	dt = 0.1;
-	mm = 2.;
-	aa = 1.;
-	vv = sqrt(G*(mm+mm)/aa)/4;
-	printf("  G: %lf; m: %lf; a: %lf; v: %lf\n",G,mm,aa,vv);
-
-	// particle 1
-	pt.x 	=-aa/2;	pt.y 	= 0; 	pt.z 	= 0;
-	pt.vx 	= 0; 	pt.vy 	= vv; 	pt.vz 	= 0;
+	pt.x 	= 0; 	pt.y 	= 0; 	pt.z 	= 0;
+	pt.vx 	= 0; 	pt.vy 	= 0; 	pt.vz 	= 0;
 	pt.ax	= 0; 	pt.ay 	= 0; 	pt.az 	= 0;
-	pt.m 	= mm;
-	particles_add(pt);
-
-	// particle 2
-	pt.x 	= aa/2;	pt.y 	= 0; 	pt.z 	= 0;
-	pt.vx 	= 0; 	pt.vy 	= -vv; 	pt.vz 	= 0;
-	pt.ax	= 0; 	pt.ay 	= 0; 	pt.az 	= 0;
-	pt.m 	= mm;
+	pt.m 	= 0;
 	particles_add(pt);
 }
 
@@ -74,13 +56,7 @@ void problem_inloop(){
 }
 
 void problem_output(){
-  //        if(output_check(4000.*dt)){
-  //              output_timing();
-  //      }
-  printf("%d; %lf\n",count++,dt);
-  output_append_orbits("orbits.txt");
-  //      if(output_check(12.)){
-  //      }
+	output_timing();
 }
 
 void problem_finish(){
