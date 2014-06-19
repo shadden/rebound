@@ -55,23 +55,30 @@ double velocity(){
 	return sqrt(v2);
 }
 
-double energy(){
-	double energy = 0;
-	struct particle p = particles[1];
-	double vx = p.vx;
-	double vy = p.vy;
-	double vz = p.vz;
-	double v2 = vx*vx + vy*vy + vz*vz;
-	energy += 0.5 *v2;
-	struct particle p2 = particles[0];
-	double rx = p.x-p2.x;
-	double ry = p.y-p2.y;
-	double rz = p.z-p2.z;
-	double r2 = rx*rx + ry*ry + rz*rz;
-	energy -= G*p.m/sqrt(r2);
-	return energy;
+double kinetic_energy(){ // specific kinetic energy
+	double v = velocity();
+	return 0.5 * v*v;
 }
+
+double potential_energy(){ // specific potential energy (i.e., potential)
+	struct particle s = particles[0];
+	struct particle p = particles[1];
+	double rx = p.x-s.x;
+	double ry = p.y-s.y;
+	double rz = p.z-s.z;
+	double r2 = rx*rx + ry*ry + rz*rz;
+	return G*s.m/sqrt(r2);
+}
+
+double energy(){
+	double K = kinetic_energy();
+	double U = kinetic_energy();
+	return K + U;
+}
+
 double energy_init;
+double K_init;
+double U_init;
 double velocity_init;
 double orbitalperiod;
 void problem_init(int argc, char* argv[]){
@@ -113,7 +120,7 @@ void problem_init(int argc, char* argv[]){
 		double vvz = 0.;
 		p2.vx = vvx*cos(phi) - vvy*sin(phi);
 		p2.vy = vvy*cos(phi) + vvx*sin(phi);
-		p2.vz = 0;
+		p2.vz = vvz;
 		p2.m = 0;
 		particles_add(p2);
  	}
@@ -123,6 +130,8 @@ void problem_init(int argc, char* argv[]){
 #endif // INTEGRATOR_WH
 
 	energy_init = energy();	
+	K_init = kinetic_energy();	
+	U_init = potential_energy();	
 	velocity_init = velocity();	
 	struct timeval tim;
 	gettimeofday(&tim, NULL);
@@ -151,15 +160,15 @@ void problem_finish(){
 #ifdef INTEGRATOR_IAS15ORIGINAL
 	FILE* of = fopen("energy_ias15original.txt","a+"); 
 #endif
-	fprintf(of,"%e\t",dt/2./M_PI);					// 1 steps per orbit
-	fprintf(of,"%.10e\t",t);					// 2 t (tmax)
-	fprintf(of,"%e\t",integrator_epsilon);				// 3 epsilon
-	fprintf(of,"%e\t",timing_stop - timing_start);			// 4 timing
+	fprintf(of,"%e ",dt/2./M_PI);					// 1 steps per orbit
+	fprintf(of,"%.10e ",t);					        // 2 t (tmax)
+	fprintf(of,"%e ",integrator_epsilon);				// 3 epsilon
+	fprintf(of,"%e ",timing_stop - timing_start);			// 4 timing
 	struct particle p = particles[1];
 	double r   = sqrt(p.x*p.x + p.y*p.y);
 	double phi2 = t; 
 	double phi = atan2(p.y,p.x); 
-	fprintf(of,"%.10e\t",r-1.-ecc);					// 5 error off-track
+	fprintf(of,"%.10e ",r-1.-ecc);					// 5 error off-track
 	double dphi = phi-phi2+M_PI;
 	while (dphi<0.){
 		dphi+= M_PI*2.;
@@ -168,12 +177,16 @@ void problem_finish(){
 		dphi-= M_PI*2.;
 	}
 	dphi -=M_PI;
-	fprintf(of,"%.10e\t",dphi);			                // 6 error on-track
-	fprintf(of,"%e\t",tmax/dt);					// 7 Number of timesteps
+	fprintf(of,"%.10e ",dphi);			                // 6 error on-track
+	fprintf(of,"%e ",tmax/dt);					// 7 Number of timesteps
 	double energy_final = energy();	
+	double K_final = kinetic_energy();	
+	double U_final = potential_energy();	
 	double velocity_final = velocity();	
-	fprintf(of,"%e\t",(energy_final-energy_init)/energy_init);	// 8 Relagtive energy error (not for wh)
-	fprintf(of,"%e\t",(velocity_final-velocity_init)/velocity_init);// 9 relative velocity error (not for wh)
+	fprintf(of,"%e ",(energy_final-energy_init)/energy_init);	// 8 relative energy error (not for wh)
+	fprintf(of,"%e ",(K_final-K_init)/K_init);	                // 9 relative kinetic energy error (not for wh)
+	fprintf(of,"%e ",(U_final-U_init)/U_init);	                //10 relative potential energy error (not for wh)
+	fprintf(of,"%e ",(velocity_final-velocity_init)/velocity_init); //11 relative velocity error (not for wh)
 	fprintf(of,"\n");
 	fclose(of);
 }
