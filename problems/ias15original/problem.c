@@ -79,7 +79,9 @@ void problem_init(int argc, char* argv[]){
 
 	integrator_epsilon	= input_get_double(argc,argv,"epsilon",1e-4);
 	double scale_a		= input_get_double(argc,argv,"scale_a",1.);
-	orbitalperiod 		= 2.*M_PI*powf(scale_a,3./2.)/sqrt(G);
+	double scale_m		= input_get_double(argc,argv,"scale_m",1.);
+	double tmax_factor	= input_get_double(argc,argv,"tmax_factor",100.);
+	orbitalperiod 		= 2.*M_PI*sqrt(scale_a*scale_a*scale_a/(G*scale_m));
 	dt			= orbitalperiod/input_get_double(argc,argv,"timesteps",10);
 	boxsize 		= 50.*scale_a;	
 	init_box();
@@ -94,17 +96,24 @@ void problem_init(int argc, char* argv[]){
 	star.vx = 0; 
 	star.vy = 0.; 
 	star.vz = 0; 
-	star.m = 1;
+	star.m = 1.*scale_m;
 	particles_add(star);
 	
 	{
 		struct particle p2;
-		p2.x = (1.+ecc)*scale_a; 
-		p2.y = 0; 
-		p2.z = 0; 
-		p2.vx = 0; 
-		p2.vy = sqrt(G*(1.-ecc)/(1.+ecc)/scale_a); 
-		p2.vz = 0; 
+		double xx = (1.+ecc)*scale_a;
+		double yy = 0.;
+		double zz = 0.;
+		double phi = tools_uniform(0.,2*M_PI); // pick random orientation
+		p2.x = xx*cos(phi) - yy*sin(phi);
+		p2.y = yy*cos(phi) + xx*sin(phi);
+		p2.z = zz;
+		double vvx = 0.;
+		double vvy = sqrt(G*scale_m*(1.-ecc)/(1.+ecc)/scale_a);
+		double vvz = 0.;
+		p2.vx = vvx*cos(phi) - vvy*sin(phi);
+		p2.vy = vvy*cos(phi) + vvx*sin(phi);
+		p2.vz = 0;
 		p2.m = 0;
 		particles_add(p2);
  	}
@@ -119,6 +128,7 @@ void problem_init(int argc, char* argv[]){
 	gettimeofday(&tim, NULL);
 	timing_start = tim.tv_sec+(tim.tv_usec/1000000.0);
 
+	tmax = tmax_factor*orbitalperiod;
 }
 
 
@@ -158,12 +168,12 @@ void problem_finish(){
 		dphi-= M_PI*2.;
 	}
 	dphi -=M_PI;
-	fprintf(of,"%.10e\t",dphi);			// 6 error on-track
+	fprintf(of,"%.10e\t",dphi);			                // 6 error on-track
 	fprintf(of,"%e\t",tmax/dt);					// 7 Number of timesteps
 	double energy_final = energy();	
 	double velocity_final = velocity();	
 	fprintf(of,"%e\t",(energy_final-energy_init)/energy_init);	// 8 Relagtive energy error (not for wh)
-	fprintf(of,"%e\t",(velocity_final-velocity_init)/velocity_init);	// 9 relative velocity error (not for wh)
+	fprintf(of,"%e\t",(velocity_final-velocity_init)/velocity_init);// 9 relative velocity error (not for wh)
 	fprintf(of,"\n");
 	fclose(of);
 }
