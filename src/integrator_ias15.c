@@ -188,11 +188,11 @@ int integrator_ias15_step() {
 
 	double predictor_corrector_error = 1;
 	int iterations = 0;
-	while(predictor_corrector_error>1e-10){						// Predictor corrector loop
+	while(predictor_corrector_error>1e-12){						// Predictor corrector loop
 		if (iterations>=integrator_iterations_max){
 			integrator_iterations_max_exceeded++;
 			const int integrator_iterations_warning = 1;
-			if (integrator_iterations_max_exceeded==integrator_iterations_warning && integrator_epsilon==0.){
+			if (integrator_iterations_max_exceeded==integrator_iterations_warning && integrator_epsilon==0. && predictor_corrector_error>1e-10){
 				fprintf(stderr,"\n\033[1mWarning!\033[0m At least %d predictor corrector loops in integrator_ias15.c did not converge. This is typically an indication of the timestep being too large.\n",integrator_iterations_warning);
 			}
 			break;								// Quit predictor corrector loop

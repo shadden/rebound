@@ -77,7 +77,7 @@ double orbitalperiod;
 void problem_init(int argc, char* argv[]){
 	G 		= 1.;		
 
-	integrator_epsilon	= input_get_double(argc,argv,"epsilon",1e-4);
+	integrator_epsilon	= input_get_double(argc,argv,"epsilon",3.31e-3);
 	double scale_a		= input_get_double(argc,argv,"scale_a",1.);
 	double scale_m		= input_get_double(argc,argv,"scale_m",1.);
 	double tmax_factor	= input_get_double(argc,argv,"tmax_factor",100.);
@@ -185,6 +185,6 @@ void problem_output(){
 	if(output_check(tmax/10000)){
 	}
 //	problem_finish();
-	printf("%e\t%e\n",dt/orbitalperiod,dt);
+//	printf("%e\t%e\n",dt/orbitalperiod,dt);
 }
 
