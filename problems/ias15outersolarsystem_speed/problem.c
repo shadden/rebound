@@ -32,6 +32,7 @@
 #include <math.h>
 #include <gmp.h>
 #include <time.h>
+#include <sys/time.h>
 #include "main.h"
 #include "output.h"
 #include "input.h"
@@ -76,12 +77,13 @@ extern int display_wire;
 
 double energy();
 double energy_init;
+double timing_start;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= input_get_double(argc,argv,"dt",40);			// days
 	N_active	= 5;
-	tmax		= 3.65e5;		// 1 Myr
+	tmax		= 3.65e5;		// 1 kyr
 	G		= k*k;
 #ifdef INTEGRATOR_IAS15
 	integrator_epsilon = input_get_double(argc,argv,"integrator_epsilon",0);
@@ -115,6 +117,10 @@ void problem_init(int argc, char* argv[]){
 #endif // INTEGRATOR_WH
 	mpf_set_default_prec(512);
 	energy_init = energy();
+	
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	timing_start = tim.tv_sec+(tim.tv_usec/1000000.0);
 }
 
 void problem_inloop(){
@@ -184,7 +190,10 @@ void problem_output(){
 void problem_finish(){
 	FILE* of = fopen("energy.txt","a+"); 
 	double rel_energy = fabs((energy()-energy_init)/energy_init);
-	fprintf(of,"%e\t%e\n",dt,rel_energy);
+	struct timeval tim;
+	gettimeofday(&tim, NULL);
+	double timing =  (tim.tv_sec+(tim.tv_usec/1000000.0)) - timing_start;
+	fprintf(of,"%e\t%e\t%e\n",timing,rel_energy,dt);
 	fclose(of);
 
 }
