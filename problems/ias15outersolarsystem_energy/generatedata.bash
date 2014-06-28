@@ -2,7 +2,7 @@
 function rundt {
 	points=100
 	min=2
-	max=3
+	max=4
 	for i in $(seq 0 $points)
 	do 
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)

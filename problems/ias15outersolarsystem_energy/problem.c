@@ -81,7 +81,7 @@ void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= input_get_double(argc,argv,"dt",40);			// days
 	N_active	= 5;
-	tmax		= 3.65e8;		// 1 Myr
+	tmax		= 3.65e5;		// 1 Myr
 	G		= k*k;
 #ifdef INTEGRATOR_IAS15
 	integrator_epsilon = 0;
