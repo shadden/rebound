@@ -34,6 +34,9 @@
 #include <time.h>
 #include "main.h"
 #include "output.h"
+#include "input.h"
+#include "integrator.h"
+#include "tools.h"
 #include "particle.h"
 #include "boundaries.h"
 
@@ -76,10 +79,14 @@ double energy_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= 40;			// days
+	dt 		= input_get_double(argc,argv,"dt",40);			// days
 	N_active	= 5;
 	tmax		= 3.65e8;		// 1 Myr
 	G		= k*k;
+#ifdef INTEGRATOR_IAS15
+	integrator_epsilon = 0;
+#endif // INTEGRATOR_IAS15
+
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL
@@ -175,6 +182,9 @@ void problem_output(){
 }
 
 void problem_finish(){
-		double rel_energy = fabs((energy()-energy_init)/energy_init);
-		printf("\n%e\t%e\n",t,rel_energy);
+	FILE* of = fopen("energy.txt","a+"); 
+	double rel_energy = fabs((energy()-energy_init)/energy_init);
+	fprintf(of,"%e\t%e\n",dt,rel_energy);
+	fclose(of);
+
 }

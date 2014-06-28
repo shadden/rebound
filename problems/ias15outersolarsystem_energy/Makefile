@@ -3,7 +3,7 @@ export OPENGL=0
 export OPT=-O3
 export LIB=-lgmp
 
-all:
+wh:
 	# Setup link to different modules
 	ln -fs gravity_direct.c ../../src/gravity.c
 	ln -fs boundaries_open.c ../../src/boundaries.c
