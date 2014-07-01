@@ -57,19 +57,19 @@ void output_ascii(char* filename);
 
 /**
  * Outputs an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect to (x,y,z)=(0,0,0) 
- * and assume a stellar mass of 1.
+ * @details The orbital parameters are calculated with respect the center of mass.
+ * Particles are assumed to be sorted from the inside out, the central object having index 0.
  * @param filename Output filename.
  */
 void output_orbits(char* filename);
 
 /**
  * Appends an ASCII file with orbital paramters of all particles.
- * @details The orbital parameters are calculated with respect to (x,y,z)=(0,0,0) 
- * and assume a stellar mass of 1.
+ * @details The orbital parameters are calculated with respect the center of mass.
+ * Particles are assumed to be sorted from the inside out, the central object having index 0. 
  * @param filename Output filename.
  */
-void output_orbits_append(char* filename);
+void output_append_orbits(char* filename);
 
 /**
  * Appends the positions and velocities of all particles to an ASCII file.
@@ -96,34 +96,24 @@ void output_binary_positions(char* filename);
 void output_append_velocity_dispersion(char* filename);
 
 /**
- * Creates a file with the positions of each collision during the simulation
- * @author: Erika Nesvold
- * @param filename Output filename, time, x,y,z coordinates of collision
+ * Output a string to the default log file 'config.log'
+ * @param name Description of value
+ * @param value Value to be outputted
  */
-void output_collisions_append(char* filename,float time,float x,float y,float z,float vx,float vy,float vz,float m);
+void output_double(char* name, double value);
 
 /**
- * Outputs the size distributions of the swarms to an ASCII file.
- * @author: Erika Nesvold
- * @param filename Output filename
+ * Output a string to the default log file 'config.log'
+ * @param name Description of value
+ * @param value Value to be outputted
  */
-void output_sizedist(char* filename);
+void output_int(char* name, int value);
 
 /**
- * Appends the size distributions of the swarms to an ASCII file.
- * @author: Erika Nesvold
- * @param filename Output filename
+ * Delete a directory if it exists, create it and chdir to it. 
+ * The name consists of 'out__' appended by all nondefault command line arguments received by input_get_double(), etc.
  */
-void output_sizedist_append(char* filename);
-
-/**
- * Appends the mean free path of the swarms to an ASCII file for debugging.
- * @author: Erika Nesvold
- * @param filename Output filename
- * @param time Current timestep
- * @param mfp Current mean free path
- */
-void output_mfp(char* filename,float time, float mfp, float path1, float path2,int numloop,float e1,float e2,float maxod);
+void output_prepare_directory();
 
 #if defined(OPENGL) && defined(LIBPNG)
 /**
@@ -141,6 +131,29 @@ void output_png(char* dirname);
  * @param filename Output filename.
  */
 void output_png_single(char* filename);
-#endif
+#endif // OPENGL && LIBPNG
+
+#ifdef PROFILING
+/**
+ * Profiling categories
+ */
+enum profiling_categories {
+	PROFILING_CAT_INTEGRATOR,
+	PROFILING_CAT_BOUNDARY,
+	PROFILING_CAT_GRAVITY,
+	PROFILING_CAT_COLLISION,
+#ifdef OPENGL
+	PROFILING_CAT_VISUALIZATION,
+#endif // OPENGL
+	PROFILING_CAT_NUM,
+};
+void profiling_start();
+void profiling_stop(int cat);
+#define PROFILING_START() profiling_start();
+#define PROFILING_STOP(C) profiling_stop(C);
+#else // PROFILING
+#define PROFILING_START()	// Dummy, do nothing 
+#define PROFILING_STOP(C)	
+#endif // PROFILING
 
 #endif
