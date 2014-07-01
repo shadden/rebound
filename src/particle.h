@@ -29,10 +29,6 @@
 struct cell;
 #endif // TREE
 
-extern int numbins;
-extern int shift;
-extern float logbinsize;
-
 /**
  * Particle structure.
  * @details This structure is used to represent one particle. Additional particle
@@ -50,12 +46,14 @@ struct particle {
 	double ay;	/**< y-acceleration of the particle. */
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
-        double number;
 #ifndef COLLISIONS_NONE
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
+#ifdef FRAGMENTATION_SMACK
+        double number;		/**< ID of particle. double is used instead of int to simplify mpi communication. */
   	double sdist[31];	/**< Size distribution of swarm */
 	double ncol;
+#endif // FRAGMENTATION_SMACK
 #endif // COLLISIONS_NONE
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
