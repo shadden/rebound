@@ -34,26 +34,6 @@
 #include "input.h"
 #include "communication_mpi.h"
 
-char input_arguments[4096]; // This is a bit of an arbitrary number. Should be dynamic.
-
-void input_append_input_arguments_with_int(const char* argument, int value){
-	if (strlen(input_arguments)){
-		strcat(input_arguments,"__");
-	}
-	char addition[2048];
-	sprintf(addition,"%s_%d",argument,value);
-	strcat(input_arguments,addition);
-}
-
-void input_append_input_arguments_with_double(const char* argument, double value){
-	if (strlen(input_arguments)){
-		strcat(input_arguments,"__");
-	}
-	char addition[2048];
-	sprintf(addition,"%s_%.3e",argument,value);
-	strcat(input_arguments,addition);
-}
-
 int input_check_restart(int argc, char** argv){
 	char filename[1024];
 	int restart = 0;
@@ -88,25 +68,6 @@ int input_check_restart(int argc, char** argv){
 	}
 	return restart;
 }
-
-double input_get_double(int argc, char** argv, const char* argument, double _default){
-	char* value = input_get_argument(argc,argv,argument);
-	if (value){
-		input_append_input_arguments_with_double(argument,atof(value));
-		return atof(value);
-	}
-	return _default;
-}
-
-int input_get_int(int argc, char** argv, const char* argument, int _default){
-	char* value = input_get_argument(argc,argv,argument);
-	if (value){
-		input_append_input_arguments_with_int(argument,atoi(value));
-		return atoi(value);
-	}
-	return _default;
-}
-
 
 char* input_get_argument(int argc, char** argv, const char* argument){
 	opterr = 0;
@@ -147,21 +108,39 @@ void input_binary(char* filename){
 #else // MPI
 	FILE* inf = fopen(filename,"rb"); 
 #endif // MPI
-	long objects = 0;
+	long bytes = 0;
 	int _N;
-	objects += fread(&_N,sizeof(int),1,inf);
-	objects += fread(&t,sizeof(double),1,inf);
+	bytes += fread(&_N,sizeof(int),1,inf);
+	//_N = _N - 1;
+	bytes += fread(&t,sizeof(double),1,inf);
 #ifdef MPI
-	printf("Found %d particles in file '%s'. ",_N,filename_mpi);
+        fprintf(stderr,"Found %d particles in file '%s'. \n",_N,filename_mpi);
 #else // MPI
-	printf("Found %d particles in file '%s'. ",_N,filename);
+	fprintf(stderr,"Found %d particles in file '%s'. \n",_N,filename);
 #endif // MPI
 	for (int i=0;i<_N;i++){
 		struct particle p;
-		objects += fread(&p,sizeof(struct particle),1,inf);
-		particles_add(p);
+		bytes += fread(&p,sizeof(struct particle),1,inf);
+		if (p.number > 0) {
+		  particles_add(p);
+		}
 	}
 	fclose(inf);
-	printf("%ld objects read. Restarting at time t=%f\n",objects,t);
+	fprintf(stderr,"%ld bytes read. Restarting at time t=%f\n",bytes,t);
 }
+
+void input_all(char* filename){
+#ifdef MPI
+  char filename_mpi[1024];
+  sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+  FILE* inf = fopen(filename_mpi,"r");
+#else 
+  FILE* inf = fopen(filename,"r");
+#endif
+  double rswarm;
+  fscanf(inf,"%d\t%le\t%le\n",&N,&t,&rswarm);
+  fprintf(stderr,"%d\t%e\t%e\n",N,t,rswarm);
+  fclose(inf);
+}
+
 

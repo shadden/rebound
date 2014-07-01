@@ -49,30 +49,4 @@ void input_binary(char* filename);
 char* input_get_argument(int argc, char** argv, const char* argument);
 
 
-/**
- * Reads arguments as a double value from the command line.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- * @param argument Argument to look for.
- * @param _default Default value.
- * @return Returns _default if argument was not given. Return the argument converted to double otherwise.
- */
-double input_get_double(int argc, char** argv, const char* argument, double _default);
-
-
-/**
- * Reads arguments as a int value from the command line.
- * @param argc Number of command line arguments.
- * @param argv Array of command line arguments.
- * @param argument Argument to look for.
- * @param _default Default value.
- * @return Returns _default if argument was not given. Return the argument converted to int otherwise.
- */
-int input_get_int(int argc, char** argv, const char* argument, int _default);
-
-/**
- * This string contains a list of arguments that were not the default.
- * This can for example be used to create a new directory.
- */
-extern char input_arguments[];
 #endif

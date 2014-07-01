@@ -29,6 +29,10 @@
 struct cell;
 #endif // TREE
 
+extern int numbins;
+extern int shift;
+extern float logbinsize;
+
 /**
  * Particle structure.
  * @details This structure is used to represent one particle. Additional particle
@@ -46,9 +50,12 @@ struct particle {
 	double ay;	/**< y-acceleration of the particle. */
 	double az;	/**< z-acceleration of the particle. */
 	double m;	/**< Mass of the particle. */
+        double number;
 #ifndef COLLISIONS_NONE
 	double r; 	/**< Radius of the particle. */
 	double lastcollision;	/**< Last time the particle had a physical collision. */
+  	double sdist[31];	/**< Size distribution of swarm */
+	double ncol;
 #endif // COLLISIONS_NONE
 #if defined(GRAVITY_TREE) || defined(COLLISIONS_TREE)
 	struct cell* c;		/**< Pointer to the cell the particle is currently in. */
@@ -83,6 +90,8 @@ void particles_add_fixed(struct particle pt,int pos);
  * @param pt Particle to be added.
  */
 void particles_add_local(struct particle pt);
+
+void particles_add_local_not_tree(struct particle pt);
 
 /**
  * Returns the index of the rootbox for the current particles based on its position.

@@ -6,7 +6,7 @@
  * @details 	These functions resolve a single collision
  * of two colliding particles using momentum und energy conservation.
  * The coefficient resitution can be set with the variable 
- * coefficient_of_restitution or, when a velocity dependent 
+ * coefficient_of_restitution or, when a velocity dependend 
  * coefficient of restitution is required with the function pointer
  * coefficient_of_restitution_for_velocity.
  * 
@@ -56,10 +56,16 @@ extern double (*coefficient_of_restitution_for_velocity) (double); /**< Function
 
 
 /**
- * Resolve a single collision assuming a hardsphere collision model (no super-particle).
+ * Resolve a single collision assuming a direct collision model (no super-particle).
  * @param c Collision to resolve.
  */
-void collision_resolve_hardsphere(struct collision c);	
+void collision_resolve_single_direct(struct collision c);	
+
+/**
+ * Resolve a single collision assuming a fragmenting collision model.
+ * @param c Collision to resolve.
+ */
+void collision_resolve_single_fragment(struct collision c);
 
 /**
  * Function pointer to collision resolve function. 
@@ -67,7 +73,7 @@ void collision_resolve_hardsphere(struct collision c);
  * or anything where collisions are not resolved exactly.
  * @param c Collision to resolve.
  */
-extern void (*collision_resolve) (struct collision);
+extern void (*collision_resolve_single) (struct collision);
 
 #endif // _COLLISION_RESOLVE_H
 

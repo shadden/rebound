@@ -41,6 +41,10 @@ struct orbit {
 	double f; 	// true anomaly
 };
 
+struct line {
+	double slope;
+	double intercept;
+};
 
 /**
  * Calculates a random variable in a given range.
@@ -67,39 +71,99 @@ double tools_normal(double variance);
 
 /**
  * This function sets up a Plummer sphere.
+ * @details This function is based on a routine from the NEMO package, P. Teuben (1995).
+ * For details on the implementation see the Appendix of Aarseth, Henon and Wielen (1974). 
  * @param _N Number of particles in the plummer sphere.
- * @param M Total mass of the cluster.
- * @param R Characteristic radius of the cluster.
+ * @param mlow Lower mass fraction cutoff (can be 0).
+ * @param rfrac Upper radius cutoff (the Plummer sphere is formally an inifitely large object).
+ * @param quiet Noisyness of the model, 0=noise, 1=medium, 2=quiet.
+ * @param scale Scales the final model before adding it to the simulation.
+ * @param shift Shift the entire sphere in position and velocity space (6 values). 
  */
 
-void tools_init_plummer(int _N, double M, double R);
+void tools_init_plummer(int _N, double mlow, double rfrac, int quiet, double scale, double* shift);
 
 /**
- * Initialize a particle on an orbit in the xy plane.
- * @param M Mass of the central object.
- * @param m Mass of the particle.
- * @param a Semi-major axis of the particle.
- * @param e Eccentricity of the particle.
- * @param omega Pericenter of the particle.
+ * This function calculates x,y,z,vx,vy,vz given a,e,i,omega,OMEGA,M
  */
-struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f);
+
+struct particle tools_orbit2p(float a, float e, float i, float omega, float OMEGA, float M, float Ms, float Mp);
 
 /**
- * This function calculated orbital elements for a given particle. 
- * @param p Particle for which the orbit is calculated.
- * @param star Star or central object particle
+ * This function calculated orbital elements for a given particle. The center of
+ * mass is assumed to be at the origin.
+ * @param p Particle.
+ * @param cmass Mass of the central object.
  * @return Orbital parameters. 
  */
-struct orbit tools_p2orbit(struct particle p, struct particle star);
+struct orbit tools_p2orbit(struct particle p, double cmass);
+
+/** 
+ * This function fits a set of numbers to a straight line y=ax+b, returning a and b
+ * @author: Erika Nesvold
+ * @param x[] x data
+ * @param y[] y data
+ * @param size Length of data
+ * @return line
+ */
+struct line tools_linefit(double x[], double y[], int size);
+
+/** 
+ * This function calculates the Laplace coefficients and Leverrier derivatives
+ *      j
+ *  j  d    i
+ * a  ---  b (a)
+ *      j   s
+ *    da
+ * @author: Marc Kuchner
+ * @param s 
+ * @param i
+ * @param j
+ * @param a
+ * @return sum Laplace coefficient
+ */
+double laplace(double s, int i, int j, double a);
+ 
+/**
+ * This function calculates the Planck function for temperature T and 
+ * frequency nu.
+ * @author: Erika Nesvold
+ * @param T temperature
+ * @param nu frequency
+ * @return B(T)
+ */
+double tools_planckF(double T, double nu);
 
 /**
- * Move to center of momentum and center of mass frame.
+ * This function calculates the Planck function for temperature T and
+ * wavelength lambda.
+ * @author: Erika Nesvold
+ * @param T temperature
+ * @param lambda wavelength
+ * @return B(T)
  */
-void tools_move_to_center_of_momentum();
+double tools_planckWL(double T, double lambda);
 
 /**
- * Returns the center of mass of particle p1 and p2.
+ * This function builds a histogram of an input array.
+ * @author: Erika Nesvold
+ * @param array pointer to input array
+ * @param histogram pointer to histogram array
+ * @param nbins number of bins for histogram
+ * @param min minimum value in array
+ * @param max maximum value in array
+ * @param numpoints number of elements in array
  */
-struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
+void tools_histogram(double* array, double* hist, int nbins, double min, double max, int numpoints);
 
-#endif 	// TOOLS_H
+/**
+ * This function normalizes an array so the max is a given value.
+ * @author: Erika Nesvold
+ * @param array pointer to array
+ * @param size number of elements in array
+ * @param value desired max value of array
+ */ 
+
+void tools_normarr(double* array, int size, double value);
+ 
+ #endif 	// TOOLS_H

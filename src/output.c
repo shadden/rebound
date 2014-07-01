@@ -27,13 +27,12 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
-#include <string.h>
 #include <sys/time.h>
 #include "particle.h"
 #include "main.h"
 #include "tools.h"
 #include "output.h"
-#include "input.h"
+#include "collisions.h"
 #include "communication_mpi.h"
 #ifdef OPENGL
 #include "display.h"
@@ -53,6 +52,8 @@
 #ifdef INTEGRATOR_SEI 	// Shearing sheet
 extern double OMEGA;
 #endif
+
+//int numbins = 0;
 
 // Check if output is needed
 
@@ -82,22 +83,7 @@ struct vec3 {
 	double z;
 };
 
-#ifdef PROFILING
-double profiling_time_sum[PROFILING_CAT_NUM];
-double profiling_time_initial 	= 0;
-double profiling_time_final 	= 0;
-void profiling_start(){
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	profiling_time_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
-}
-void profiling_stop(int cat){
-	struct timeval tim;
-	gettimeofday(&tim, NULL);
-	profiling_time_final = tim.tv_sec+(tim.tv_usec/1000000.0);
-	profiling_time_sum[cat] += profiling_time_final - profiling_time_initial;
-}
-#endif // PROFILING
+
 
 double output_timing_last = -1; 	/**< Time when output_timing() was called the last time. */
 void output_timing(){
@@ -114,62 +100,16 @@ void output_timing(){
 	if (output_timing_last==-1){
 		output_timing_last = temp;
 	}else{
-		printf("\r");
-#ifdef PROFILING
-		fputs("\033[A\033[2K",stdout);
-		for (int i=0;i<=PROFILING_CAT_NUM;i++){
-			fputs("\033[A\033[2K",stdout);
-		}
-#endif // PROFILING
+	  //	printf("\r");
 	}
-	printf("N_tot= %- 9d  ",N_tot);
-#ifdef BOUNDARIES_SHEAR
-	printf("t= %- 9f [orb]  ",t*OMEGA/2./M_PI);
-#else // BOUNDARIES_SHEAR
-	printf("t= %- 9f  ",t);
-#endif // BOUNDARIES_SHEAR
-	printf("cpu= %- 9f [s]  ",temp-output_timing_last);
 	if (tmax>0){
-		printf("t/tmax= %5.2f%%",t/tmax*100.0);
+	  //	printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s  t/tmax= %5.2f%%",N_tot,t,temp-output_timing_last,t/tmax*100);
+	}else{
+	  //	printf("N_tot= %- 9d  t= %- 9f  cpu= %- 9f s ",N_tot,t,temp-output_timing_last);
 	}
-#ifdef PROFILING
-	printf("\nCATEGORY       TIME \n");
-	double _sum = 0;
-	for (int i=0;i<=PROFILING_CAT_NUM;i++){
-		switch (i){
-			case PROFILING_CAT_INTEGRATOR:
-				printf("Integrator     ");
-				break;
-			case PROFILING_CAT_BOUNDARY:
-				printf("Boundary check ");
-				break;
-			case PROFILING_CAT_GRAVITY:
-				printf("Gravity/Forces ");
-				break;
-			case PROFILING_CAT_COLLISION:
-				printf("Collisions     ");
-				break;
-#ifdef OPENGL
-			case PROFILING_CAT_VISUALIZATION:
-				printf("Visualization  ");
-				break;
-#endif // OPENGL
-			case PROFILING_CAT_NUM:
-				printf("Other          ");
-				break;
-		}
-		if (i==PROFILING_CAT_NUM){
-			printf("%5.2f%%",(1.-_sum/(profiling_time_final - timing_initial))*100.);
-		}else{
-			printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - timing_initial)*100.);
-			_sum += profiling_time_sum[i];
-		}
-	}
-#endif // PROFILING
 	fflush(stdout);
 	output_timing_last = temp;
 }
-
 
 void output_append_ascii(char* filename){
 #ifdef MPI
@@ -179,13 +119,9 @@ void output_append_ascii(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
+		fprintf(of,"%e\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,(int)particles[i].number,p.x,p.y,p.z,p.vx,p.vy,p.vz,p.m);
 	}
 	fclose(of);
 }
@@ -198,10 +134,6 @@ void output_ascii(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\n",p.x,p.y,p.z,p.vx,p.vy,p.vz);
@@ -209,7 +141,7 @@ void output_ascii(char* filename){
 	fclose(of);
 }
 
-void output_append_orbits(char* filename){
+void output_orbits_append(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -217,15 +149,13 @@ void output_append_orbits(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"a"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
-	struct particle com = particles[0];
-	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],com);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		com = tools_get_center_of_mass(com,particles[i]);
+	for (int i=0;i<N;i++){
+		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
+#ifdef COLLISIONS_NONE
+		fprintf(of,"%e\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,(int)particles[i].number,o.a,o.e,o.inc,o.Omega,o.omega,o.l,particles[i].m);
+#else
+	       	fprintf(of,"%e\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%d\n",t,(int)particles[i].number,o.a,o.e,o.inc,o.Omega,o.omega,o.l,particles[i].m,(int)particles[i].ncol);
+#endif
 	}
 	fclose(of);
 }
@@ -238,19 +168,12 @@ void output_orbits(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"w"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
-	struct particle com = particles[0];
-	for (int i=1;i<N;i++){
-		struct orbit o = tools_p2orbit(particles[i],com);
-		fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
-		com = tools_get_center_of_mass(com,particles[i]);
+	for (int i=0;i<N;i++){
+		struct orbit o = tools_p2orbit(particles[i],particles[0].m);
+		fprintf(of,"%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",(int)particles[i].number,o.a,o.e,o.inc,o.Omega,o.omega,o.l,o.P,o.f);
 	}
 	fclose(of);
 }
-
 
 void output_binary(char* filename){
 #ifdef MPI
@@ -260,13 +183,10 @@ void output_binary(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
-	fwrite(&N,sizeof(int),1,of);
+	int _N = N-1;
+	fwrite(&_N,sizeof(int),1,of);
 	fwrite(&t,sizeof(double),1,of);
-	for (int i=0;i<N;i++){
+	for (int i=1;i<N;i++){
 		struct particle p = particles[i];
 		fwrite(&(p),sizeof(struct particle),1,of);
 	}
@@ -281,10 +201,6 @@ void output_binary_positions(char* filename){
 #else // MPI
 	FILE* of = fopen(filename,"wb"); 
 #endif // MPI
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
 	for (int i=0;i<N;i++){
 		struct vec3 v;
 		v.x = particles[i].x;
@@ -334,61 +250,67 @@ void output_append_velocity_dispersion(char* filename){
 	Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
 	Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
 	FILE* of = fopen(filename,"a"); 
-	if (of==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
 	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
 	fclose(of);
 }
 
-int output_logfile_first = 1;
-void output_logfile(char* data){
-	if (output_logfile_first){
-		output_logfile_first = 0;
-		system("rm -fv config.log");
-	}
-	FILE* file = fopen("config.log","a+");
-	fputs(data,file);
-	fclose(file);
+void output_collisions_append(char* filename,float time,float x,float y,float z,float vx,float vy,float vz,float m){
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"a");
+#else // MPI
+	FILE* of = fopen(filename,"a");
+#endif // MPI
+	fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",t,x,y,z,vx,vy,vz,m);
+	fclose(of);
 }
 
-void output_double(char* name, double value){
-	char data[2048];
-	if (value>1e7){
-		sprintf(data,"%-35s =         %10e\n",name,value);
-	}else{
-		if (fabs(fmod(value,1.))>1e-9){
-			sprintf(data,"%-35s = %20.10f\n",name,value);
-		}else{
-			sprintf(data,"%-35s = %11.1f\n",name,value);
+void output_sizedist(char* filename){
+#ifndef COLLISIONS_NONE
+#ifdef MPI
+	char filename_mpi[1024];
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"w");
+#else // MPI
+	FILE* of = fopen(filename,"w");	
+#endif // MPI
+	for (int i=N_active; i<N; i++) {
+		for (int j=0; j<numbins; j++) {
+		  		fprintf(of,"%e\t",particles[i].sdist[j]);
 		}
+		fprintf(of,"\n");
 	}
-	output_logfile(data);
+	fclose(of);
+#endif
 }
-void output_int(char* name, int value){
-	char data[2048];
-	sprintf(data,"%-35s = %9d\n",name,value);
-	output_logfile(data);
-}
-	
-void output_prepare_directory(){
-	char dirname[4096] = "out__";
-	strcat(dirname,input_arguments);
+
+void output_sizedist_append(char* filename){
+#ifndef COLLISIONS_NONE
 #ifdef MPI
-	if (mpi_id==0){
-#endif // MPI
-	char tmpsystem[4096];
-	sprintf(tmpsystem,"rm -rf %s",dirname);
-	system(tmpsystem);
-	sprintf(tmpsystem,"mkdir %s",dirname);
-	system(tmpsystem);
-#ifdef MPI
+	char filename_mpi[1024];
+	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+	FILE* of = fopen(filename_mpi,"a");
+#else // MPI
+	FILE* of = fopen(filename,"a");
+#endif //MPI
+	for (int i=N_active; i<N; i++) {
+	  	fprintf(of,"%e\t%d\t",t,(int)particles[i].number);
+		for (int j=0; j<numbins; j++) {
+		  		fprintf(of,"%e\t",particles[i].sdist[j]);
+		}
+		fprintf(of,"\n");
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	sleep(5); // Wait because the filesystem might be slow to respond.
-#endif // MPI
-	chdir(dirname);
+	fclose(of);
+#endif
+}
+
+void output_mfp(char* filename,float time,float mfp,float path1,float path2,int numloop,float e1,float e2,float maxod) {
+  char filename_mpi[1024];
+  sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+  FILE* of = fopen(filename_mpi,"a");
+  fprintf(of,"%e\t%e\t%e\t%e\t%d\t%e\t%e\t%e\n",time,mfp,path1,path2,numloop,e1,e2,maxod);
+  fclose(of);
 }
 
 #ifdef OPENGL
@@ -426,10 +348,7 @@ void output_png_single(char* filename){
 	png_structp png_ptr;
 	png_infop info_ptr;
 	fp = fopen(filename, "wb");
-	if (fp==NULL){
-		printf("\n\nError while opening file '%s'.\n",filename);
-		return;
-	}
+	if (fp == NULL) return;
 
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
