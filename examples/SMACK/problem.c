@@ -126,7 +126,33 @@ void problem_finish(){
 
 
 
-// Temp
+struct line tools_linefit(double x[], double y[], int size){
+	
+	struct line l;
+	
+	double totalx = 0.0;
+	double totaly = 0.0;
+	double totalxy = 0.0;
+	double totalxx = 0.0;
+	for (int i=0; i<size; i++) {
+		totalx += log10(x[i]);
+		totaly += log10(y[i]);
+		totalxy += log10(x[i])*log10(y[i]);
+		totalxx += log10(x[i])*log10(x[i]);
+	}
+	double avgx = totalx/size;
+	double avgy = totaly/size;
+	double avgxy = totalxy/size;
+	double avgxx = totalxx/size;
+	
+	double numerator = avgxy - (avgx*avgy);
+	double denominator = avgxx - (avgx*avgx);
+	l.slope = numerator/denominator;
+	l.intercept = avgy-(l.slope*avgx);
+	
+	return l;
+}
+
 
 double mfp = 0.0; /* Average mean free path */
 
@@ -641,8 +667,8 @@ void collision_resolve_single_fragment(struct collision c){
 	newrelv = sqrt(pow(vxc-vxd,2)+pow(vyc-vyd,2)+pow(vzc-vzd,2));
 	newrelv *= vconv;	  
 
-	struct orbit o1 = tools_p2orbit(particles[c.p1],particles[0].m);
-	struct orbit o2 = tools_p2orbit(particles[c.p2],particles[0].m);
+	//struct orbit o1 = tools_p2orbit(particles[c.p1],particles[0]);
+	//struct orbit o2 = tools_p2orbit(particles[c.p2],particles[0]);
 	//fprintf(stderr,"%d loop(s): p1 = %e, p2 = %e, relv = %e, e1 = %e, e2 = %e, maxod = %e\n",numloop,pathlength1,pathlength2,relv,o1.e,o2.e,maxodsave);
 	//if (numloop >= 10) {
 	// fprintf(stderr,"maxod = %e\tpathlength1 = %e\tpathlength2=%e\n",maxodsave,pathlength1,pathlength2);
