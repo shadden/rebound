@@ -43,6 +43,9 @@ int N_active 	= -1;
 int boundaries_particle_is_in_box(struct particle p);
 int particles_warning_is_not_in_box = 0;
 #endif // BOUNDARIES_OPEN
+#ifdef GRAVITY_GRAPE
+extern double gravity_minimum_mass;
+#endif // GRAVITY_GRAPE
 
 void particles_add_local(struct particle pt){
 #ifdef BOUNDARIES_OPEN
@@ -96,19 +99,18 @@ void particles_add(struct particle pt){
 		}
 	}
 #endif 	// COLLISIONS_NONE
+#ifdef GRAVITY_GRAPE
+	if (pt.m<gravity_minimum_mass){
+		gravity_minimum_mass = pt.m;
+	}
+#endif // GRAVITY_GRAPE
 #ifdef MPI
 	int rootbox = particles_get_rootbox_for_particle(pt);
 	int root_n_per_node = root_n/mpi_num;
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != mpi_id && N >= N_active){
-	  	  if (mpi_id == 3 && t > 1.838705e6) {
-		    //  fprintf(stderr,"Send to queue...\n");
-		  }
 		// Add particle to array and send them to proc_id later. 
 		communication_mpi_add_particle_to_send_queue(pt,proc_id);
-		  if (mpi_id == 3 && t > 1.838705e6) {
-		    //  fprintf(stderr,"Back from queue. Returning.\n");
-		  }
 		return;
 	}
 #endif // MPI
