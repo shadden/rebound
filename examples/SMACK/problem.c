@@ -105,7 +105,11 @@ void problem_init(int argc, char* argv[]){
 #ifndef COLLISIONS_NONE
 	star.r		= 1.0*0.0046491;	// Rsun
 #endif
-	particles_add_local_not_tree(star);
+	// Add the star to the particle array, but not to the tree
+	Nmax += 128;
+	particles = realloc(particles,sizeof(struct particle)*Nmax);
+	particles[N] = star;
+	N++;
 	
 	// Collision parameters
 	float p0 = 2.5;

@@ -89,8 +89,6 @@ void particles_add_fixed(struct particle pt,int pos);
  */
 void particles_add_local(struct particle pt);
 
-void particles_add_local_not_tree(struct particle pt);
-
 /**
  * Returns the index of the rootbox for the current particles based on its position.
  * @return Index of the rootbox.
