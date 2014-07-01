@@ -44,6 +44,10 @@
 #include "display.h"
 
 extern long collisions_Nlog;
+struct line {
+	double slope;
+	double intercept;
+};
 void collision_resolve_single_fragment(struct collision c);
 
 extern double opening_angle2;
