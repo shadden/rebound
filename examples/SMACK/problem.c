@@ -48,6 +48,17 @@ struct line {
 	double slope;
 	double intercept;
 };
+
+/**
+ * This function fits a set of numbers to a straight line y=ax+b, returning a and b
+ * @author: Erika Nesvold
+ * @param x[] x data
+ * @param y[] y data
+ * @param size Length of data
+ * @return line
+ */
+struct line tools_linefit(double x[], double y[], int size);
+
 void collision_resolve_single_fragment(struct collision c);
 
 extern double opening_angle2;
