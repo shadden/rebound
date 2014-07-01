@@ -59,72 +59,179 @@ struct line {
  */
 struct line tools_linefit(double x[], double y[], int size);
 
+/**
+ * This function calculates x,y,z,vx,vy,vz given a,e,i,omega,OMEGA,M
+ */
+
+struct particle tools_orbit2p(float a, float e, float i, float omega, float OMEGA, float M, float Ms, float Mp);
+
+/**
+ * Appends the size distributions of the swarms to an ASCII file.
+ * @author: Erika Nesvold
+ * @param filename Output filename
+ */
+void output_sizedist_append(char* filename);
+
 void collision_resolve_single_fragment(struct collision c);
 
 extern double opening_angle2;
 
+int numbins = 21;
+float logbinsize = 0.1;
+int shift = 3;
+
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-#ifdef GRAVITY_TREE
-	opening_angle2	= .5;
-#endif // GRAVITY_TREE
-	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
-	softening 			= 0.1;			// m
-	root_nx = 2; root_ny = 2; root_nz = 1;
-	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
-	double surfacedensity 		= 840; 			// kg/m^2
-	double particle_density		= 900;			// kg/m^3
-	double particle_radius_min 	= 1.;			// m
-	double particle_radius_max 	= 1.;			// m
-	double particle_radius_slope 	= -3;	
-	boxsize 			= 40;			// m
+	N_active = 1;
+#ifndef COLLISIONS_NONE	
+	N_tree_fixed = 1;
+#endif
+	boxsize = 180;	// AU
+	root_nx = 2;
+	root_ny = 2;
+	dt = 1.0/0.159; // Timestep (years->code units)
+	tmax = (1.0e2+1)*dt;
 	init_box();
 	
 	// Change collision_resolve routing from default.
 	collision_resolve = collision_resolve_single_fragment;
 	
-	
-	double total_mass = surfacedensity*boxsize_x*boxsize_y;
-	double mass = 0;
-	while(mass<total_mass){
-		struct particle pt;
-		pt.x 		= tools_uniform(-boxsize_x/2.,boxsize_x/2.);
-		pt.y 		= tools_uniform(-boxsize_y/2.,boxsize_y/2.);
-		pt.z 		= tools_normal(1.);					// m
-		pt.vx 		= 0;
-		pt.vz 		= 0;
-		pt.ax 		= 0;
-		pt.ay 		= 0;
-		pt.az 		= 0;
-		double radius 	= tools_powerlaw(particle_radius_min,particle_radius_max,particle_radius_slope);
+	// Initial conditions for star
+	struct particle star;
+	star.x 		= 0; star.y 	= 0; star.z	= 0;
+	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
+	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
+	star.m 		= 1.0;
 #ifndef COLLISIONS_NONE
-		pt.r 		= radius;						// m
+	star.r		= 1.0*0.0046491;	// Rsun
 #endif
-		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
-		pt.m 		= particle_mass; 	// kg
-		particles_add(pt);
-		mass += particle_mass;
-	}
-}
+	particles_add_local_not_tree(star);
+	
+	// Collision parameters
+	float p0 = 2.5;
+	float rho = 3000.;
+	int nowave = 1;
+	int extra = 30;
+	
+	// Orbital parameters
+	float amin = 50.0;
+	float amax = 60.0;
+	float emin = 0.0;
+	float emax = 0.1;
+	float imin = 0.0;
+	float imax = emax/2.; 
+	float Orange = 2*M_PI;	
+	float orange = 2*M_PI;
+	float Mrange = 2*M_PI;
+	double a,e,i,OMEGA,omega,M;
 
-double coefficient_of_restitution_bridges(double v){
-	// assumes v in units of [m/s]
-	double eps = 0.32*pow(fabs(v)*100.,-0.234);
-	if (eps>1) eps=1;
-	if (eps<0) eps=0;
-	return eps;
+	// Swarm parameters
+	int numswarms = 100;
+	//float swarmr = pow(10.0,-(1./3));	// AU
+	float swarmr = 1.0;
+	float height = 2.77137; // ecc 0.2
+	float factor = 3*height/(4*swarmr);
+	float initOD = 1.0e-2; // Initial optical depth
+	float Aeach = initOD*M_PI*swarmr*swarmr*1.5e11*1.5e11/factor;  
+	float distsum;
+	float C;
+	double sdist[numbins];
+	double smass;
+	
+	// Size bin array
+	float sizebins[numbins];
+	float bigbins[numbins+extra];
+	for (int i=0;i<numbins;i++){
+		sizebins[i] = pow(10,i*logbinsize-shift);
+	}
+	if (nowave) {
+		for (int i=0; i<numbins+extra; i++) {
+			bigbins[i] = pow(10,i*logbinsize-shift-extra*logbinsize);
+		}
+	}
+	
+	
+	// Setup particle structures
+#ifdef MPI
+	for(int N=0;N<numswarms/mpi_num;N++) {
+#else
+		for(int N=0;N<numswarms;N++) {
+#endif
+	        a = tools_uniform(amin,amax);
+			e = tools_uniform(emin,emax);
+			i = tools_uniform(imin,imax);
+			OMEGA = tools_uniform(0,Orange);
+			omega = tools_uniform(0,orange);
+			M = tools_uniform(0,Mrange);
+			
+			// Size distributions
+			smass = 0.0;
+			distsum = 0.0;
+			for (int j=0; j<numbins; j++) {
+				distsum += pow(bigbins[j],-1*p0)*pow(bigbins[j],2);
+			}
+			C = (4*Aeach)/(M_PI*distsum);
+			for (int i=0; i<numbins; i++) {
+				sdist[i] = C*pow(sizebins[i],-p0);
+				smass += (M_PI/6)*rho*pow(sizebins[i],3)*sdist[i];
+			}
+			
+			smass /= 1.98892e30; // convert to solar units
+			struct particle p;
+			p = tools_orbit2p(a,e,i,omega,OMEGA,M,star.m,smass);
+			p.m = smass;
+#ifndef COLLISIONS_NONE
+			p.r = swarmr;
+			p.number = N + N_active;
+#ifdef MPI
+			p.number = N + N_active + mpi_id*numswarms/mpi_num;
+#endif
+			p.ncol = 0;
+			for (int i=0; i<numbins; i++) {
+				p.sdist[i] = sdist[i];
+			}
+#endif		
+			particles_add(p);
+			
+#ifdef MPI			
+			communication_mpi_distribute_particles();
+#endif
+		}
+			
 }
 
 void problem_inloop(){
 }
 
 void problem_output(){
+	output_timing();
+	if (output_check(dt*10.0)) {
+		output_sizedist_append("sizedist.txt");
+	}
 }
 
 void problem_finish(){
 }
 
-
+void output_sizedist_append(char* filename){
+#ifndef COLLISIONS_NONE
+#ifdef MPI
+		char filename_mpi[1024];
+		sprintf(filename_mpi,"%s_%d",filename,mpi_id);
+		FILE* of = fopen(filename_mpi,"a");
+#else // MPI
+		FILE* of = fopen(filename,"a");
+#endif //MPI
+		for (int i=N_active; i<N; i++) {
+			fprintf(of,"%e\t%d\t%d\t",t,(int)particles[i].number,(int)particles[i].ncol);
+			for (int j=0; j<numbins; j++) {
+		  		fprintf(of,"%e\t",particles[i].sdist[j]);
+			}
+			fprintf(of,"\n");
+		}
+		fclose(of);
+#endif
+}
 
 struct line tools_linefit(double x[], double y[], int size){
 	
@@ -153,6 +260,77 @@ struct line tools_linefit(double x[], double y[], int size){
 	return l;
 }
 
+		struct particle tools_orbit2p(float a, float e, float i, float omega, float OMEGA, float M, float Ms, float Mp){
+			
+			struct particle p;
+			// Calculate eccentric anomaly
+			float error = 1.0E-6;
+			float E;
+			if (M<M_PI) {
+				E = M + e/2.;
+			} else {
+				E = M - e/2.;
+			}
+			float ratio = 1.0;
+			while (fabs(ratio)>error) {
+				ratio = (E-e*sin(E)-M)/(1-e*cos(E));
+				E = E - ratio;
+			}
+			
+			// Calculate x and y before rotation
+			float x;
+			float y;
+			x = a*(cos(E)-e);
+			y = a*sqrt(1-pow(e,2))*sin(E);
+			
+			// Rotate through angles
+			float P1[3][3] = {{cos(omega),-1*sin(omega),0.},{sin(omega),cos(omega),0.},{0.,0.,1.}};
+			float P2[3][3] = {{1.,0.,0.},{0.,cos(i),-1*sin(i)},{0.,sin(i),cos(i)}};
+			float P3[3][3] = {{cos(OMEGA),-1*sin(OMEGA),0.},{sin(OMEGA),cos(OMEGA),0.},{0.,0.,1.}};
+			float P4[3][3];
+			float Q[3][3];
+			for (int i=0; i<3; i++) {
+				for (int j=0; j<3; j++) {
+					P4[i][j]=P3[i][0]*P2[0][j]+P3[i][1]*P2[1][j]+P3[i][2]*P2[2][j];
+				}
+			}
+			for (int i=0; i<3; i++) {
+				for (int j=0; j<3; j++) {
+					Q[i][j]=P4[i][0]*P1[0][j]+P4[i][1]*P1[1][j]+P4[i][2]*P1[2][j];
+				}
+			}
+			float R[3][1];
+			for (int i=0; i<3; i++) {
+				R[i][0] = Q[i][0]*x+Q[i][1]*y+Q[i][2]*0.;
+			}
+			p.x = R[0][0];
+			p.y = R[1][0];
+			p.z = R[2][0];
+			
+			// Calculate velocities
+			float mu = Ms+Mp;
+			float xdot = -1*sqrt(mu*a)*sin(E)/sqrt(x*x+y*y);
+			float ydot = sqrt(mu*a)*sqrt(1-e*e)*cos(E)/sqrt(x*x+y*y);
+			float V[3][1];
+			for (int i=0; i<3; i++) {
+				V[i][0] = Q[i][0]*xdot+Q[i][1]*ydot+Q[i][2]*0.;
+			}
+			p.vx = V[0][0];
+			p.vy = V[1][0];
+			p.vz = V[2][0];
+			
+			p.m = 0;
+			p.ax = 0;
+			p.ay = 0;
+			p.az = 0;
+#ifndef COLLISIONS_NONE
+			p.r = 0;
+			p.lastcollision=0;
+#endif
+			
+			return p;
+		}
+		
 
 double mfp = 0.0; /* Average mean free path */
 
