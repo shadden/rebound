@@ -43,6 +43,7 @@
 #include "tools.h"
 #include "display.h"
 
+extern int Nmax;
 extern long collisions_Nlog;
 struct line {
 	double slope;
