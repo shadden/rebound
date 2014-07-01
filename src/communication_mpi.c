@@ -86,8 +86,11 @@ void communication_mpi_init(int argc, char** argv){
 	MPI_Datatype oldtypes[4];
 	blen[bnum] 	= 10;
 #ifndef COLLISIONS_NONE
-	//blen[bnum] 	+= 2; 
-	blen[bnum] += 4+31;	
+#ifndef FRAGMENTATION_SMACK
+	blen[bnum] 	+= 2; 
+#else
+	blen[bnum] 	+= 4+31;	
+#endif //FRAGMENTATION_SMACK
 #endif //COLLISIONS_NONE
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
@@ -95,7 +98,7 @@ void communication_mpi_init(int argc, char** argv){
 #ifdef TREE
 	struct particle p;
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= (void*)&p.c - (void*)&p; 
+	indices[bnum] 	= (char*)&p.c - (char*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 #endif // TREE
@@ -121,11 +124,11 @@ void communication_mpi_init(int argc, char** argv){
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
 	blen[bnum] 	= 8; 
-	indices[bnum] 	= (void*)&c.oct - (void*)&c; 
+	indices[bnum] 	= (char*)&c.oct - (char*)&c; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
 	blen[bnum] 	= 1; 
-	indices[bnum] 	= (void*)&c.pt - (void*)&c; 
+	indices[bnum] 	= (char*)&c.pt - (char*)&c; 
 	oldtypes[bnum] 	= MPI_INT;
 	bnum++;
 	blen[bnum] 	= 1; 
@@ -144,6 +147,9 @@ void communication_mpi_init(int argc, char** argv){
 	particles_recv_N 	= calloc(mpi_num,sizeof(int));
 	particles_recv_Nmax 	= calloc(mpi_num,sizeof(int));
 
+#ifdef FRAGMENTATION_SMACK
+	// Preallocate arrays as SMACK will distribute a lot of particles.
+	// This shouldn't be necessary, but seems to avoid crashes.
 	for (int i=0;i<mpi_num;i++){
 		particles_send_Nmax[i] 	= 3200;
 		particles_send_N[i] 	= 0;
@@ -152,6 +158,7 @@ void communication_mpi_init(int argc, char** argv){
 		particles_recv_N[i] 	= 0;
 		particles_recv[i] 	= realloc(particles_recv[i],sizeof(struct particle)*particles_recv_Nmax[i]);
 	}
+#endif // FRAGMENTATION_SMACK
 
 #ifdef TREE
 	// Prepare send/recv buffers for essential tree
@@ -162,6 +169,9 @@ void communication_mpi_init(int argc, char** argv){
 	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
 	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
 	
+#ifdef FRAGMENTATION_SMACK
+	// Preallocate arrays as SMACK will distribute a lot of particles.
+	// This shouldn't be necessary, but seems to avoid crashes.
 	for (int i=0;i<mpi_num;i++){
 		tree_essential_send_Nmax[i] 	= 3200;
 		tree_essential_send_N[i] 	= 0;
@@ -170,6 +180,7 @@ void communication_mpi_init(int argc, char** argv){
 		tree_essential_recv_N[i] 	= 0;
 		tree_essential_recv[i] 	= realloc(tree_essential_recv[i],sizeof(struct cell)*tree_essential_recv_Nmax[i]);
 	}
+#endif // FRAGMENTATION_SMACK
 #endif
 }
 
@@ -235,12 +246,8 @@ void communication_mpi_distribute_particles(){
 
 void communication_mpi_add_particle_to_send_queue(struct particle pt, int proc_id){
 	int send_N = particles_send_N[proc_id];
-	//fprintf(stderr,"MPI node %d, time %e: %d vs %d\n",mpi_id,t,send_N,particles_send_Nmax[proc_id]);
 	while (particles_send_Nmax[proc_id] <= send_N){
 		particles_send_Nmax[proc_id] += 128;
-		//if (mpi_id == 3 && t > 1.838705e6) {
-		//fprintf(stderr,"MPI node %d, time %e: %d particles\n",mpi_id,t,particles_send_N[proc_id]);
-		  //}
 		particles_send[proc_id] = realloc(particles_send[proc_id],sizeof(struct particle)*particles_send_Nmax[proc_id]);
 	}
 	particles_send[proc_id][send_N] = pt;
@@ -332,12 +339,7 @@ void communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct cel
 	// Add essential cell to tree_essential_send
 	if (tree_essential_send_N[proc]>=tree_essential_send_Nmax[proc]){
 		tree_essential_send_Nmax[proc] += 32;
-		struct cell* newpointer = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
-		if (newpointer == NULL){
-			printf("Error allocating memory for tree_essential_send[proc].\n");
-		}else{
-			tree_essential_send[proc] = newpointer; 
-		}
+		tree_essential_send[proc] = realloc(tree_essential_send[proc],sizeof(struct cell)*tree_essential_send_Nmax[proc]);
 	}
 	// Copy node to send buffer
 	tree_essential_send[proc][tree_essential_send_N[proc]] = (*node);
