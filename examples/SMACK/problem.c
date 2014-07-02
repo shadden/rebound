@@ -700,9 +700,14 @@ void collision_resolve_single_fragment(struct collision c){
 		///////////////////////////////////////////////////////////////////////////////////////
 		// Calculate fragment distributions
 		// Loop through each target
+		// TODO: Move this precalculation into the init routine (it's the same every loop)
 		double powbigbins[numbins+extra];
 		for (int j = 0; j < numbins+extra; j++) {
 			powbigbins[j] = pow(bigbins[j],3.-n0);
+		}
+		double powsizebins[numbins];
+		for (int j = 0; j < numbins; j++) {
+			powsizebins[j] = pow(sizebins[j],-1.*n0);
 		}
 
 		for (int i = 0; i < numbins; i++) {
@@ -729,7 +734,7 @@ void collision_resolve_single_fragment(struct collision c){
 				B = 6.*mass[i]/(M_PI*rho*fragdistsum);
 				for (int k = 0; k < numbins; k++) {
 					if (k <= lr) {
-						fragmentdist[i][j][k] = B*pow(sizebins[k],-1*n0);
+						fragmentdist[i][j][k] = B*powsizebins[k];
 					} else {
 						fragmentdist[i][j][k] = 0.0;
 					}
