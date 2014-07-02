@@ -513,7 +513,6 @@ void collision_resolve_single_fragment(struct collision c){
 	double od2arr[numbins+extra][numbins+extra];	// Prob of target in # hit by projectile in other
 	double Eloss1 = 0.0; // total energy loss in SP 1
 	double Eloss2 = 0.0; // total energy loss in SP 2
-	double EL1[numbins],EL2[numbins]; // energy loss per bin in SP 1, SP 2
 	double newdist1[numbins]; // new size distribution for SP 1
 	double newdist2[numbins]; // new size distribution for SP 2
 	// Start with new size distributions equal to initial size distributions
@@ -741,20 +740,20 @@ void collision_resolve_single_fragment(struct collision c){
 		/////////////////////////////////////////////////////////////////////////////
 		// Calculate survivors and fragments
 		for (int i=0; i<numbins; i++) {
-			EL1[i] = 0.0;
-			EL2[i] = 0.0;
+			double EL1 = 0.0;  // energy loss per bin in SP 1
+			double EL2 = 0.0;  // energy loss per bin in SP 2
 			// Calculate loss from each bin
 			loss1[i] = od1[i+extra]*newdist1[i];
 			loss2[i] = od2[i+extra]*newdist2[i];
 			for (int j=0; j<numbins+extra; j++) {
 				// Add to energy loss
 				// Each planetesimal in each collision loses half the collisional energy
-				EL1[i] += 0.5*Ecol[i][j]*loss1[i];
-				EL2[i] += 0.5*Ecol[i][j]*loss2[i];
+				EL1 += 0.5*Ecol[i][j]*loss1[i];
+				EL2 += 0.5*Ecol[i][j]*loss2[i];
 			}
 			// Total energy loss
-			Eloss1 += EL1[i];
-			Eloss2 += EL2[i];
+			Eloss1 += EL1;
+			Eloss2 += EL2;
 			// Number of survivors
 			survivors1[i] = newdist1[i] - loss1[i];
 			survivors2[i] = newdist2[i] - loss2[i];
