@@ -214,7 +214,7 @@ void problem_inloop(){
 void problem_output(){
 	output_timing();
 	if (output_check(dt*100.0)) {
-		output_sizedist_append("sizedist.txt");
+		output_smack_sizedist("sizedist.txt");
 	}
 }
 
