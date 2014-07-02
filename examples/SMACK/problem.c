@@ -61,8 +61,9 @@ double Qd[numbins+extra];		// minimum projectile kinetic energy
 double Ecol[numbins+extra][numbins+extra];  // collision energy
 double Qsuper[numbins+extra];// threshold for supercatastrophic fragmentation
 double Mlr[numbins+extra][numbins+extra]; // mass of largest fragment
-double powbigbins[numbins+extra];
-double powsizebins[numbins];
+double powbigbins[numbins+extra]; // used to normalize fragment distribution
+double powsizebins[numbins];	// used to normalize fragment distribution
+double fragdistsum[numbins];	// used to normalize fragment distribution
 
 #include "smack.c"
 
@@ -157,6 +158,12 @@ void problem_init(int argc, char* argv[]){
 	}
 	for (int j = 0; j < numbins; j++) {
 		powsizebins[j] = pow(sizebins[j],-1.*n0);
+	}
+	
+	for (int lr = 0;  lr < numbins; lr++) {
+		for (int k = 0; k <= (lr+extra); k++) {
+			fragdistsum[lr] += powbigbins[k];
+		}	
 	}
 	
 	// Setup particle structures

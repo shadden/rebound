@@ -453,7 +453,6 @@ void collision_resolve_single_fragment(struct collision c){
 	double sizebins2[fitlength]; // subset of size bins to use for extrapolation
 	
 	int lr; // index of largest fragment
-	double fragdistsum; // sum of fragment distribution (used to calculate B)
 	double B; // normalization for fragment distribution
 	double fragmentdist[numbins][numbins+extra][numbins];	// fragment distribution [target] [projectile] [fragments]
 	
@@ -602,13 +601,12 @@ void collision_resolve_single_fragment(struct collision c){
 		for (int i = 0; i < numbins; i++) {
 			// Loop through each projectile
 			for (int j = 0; j < numbins+extra; j++) {
-				//Mlr[i+extra][j] = 0.5*mass[i]; // Largest fragment is half the mass of the target
 				lr = 0;
 				// Find index of largest fragment
 				while (mass[lr] < Mlr[i+extra][j]) {
 					lr ++;
 				}
-				if (lr > numbins) {
+				if (lr >= numbins) {
 					fprintf(stderr,"Warning! Largest remnant outside array.\n");
 					fprintf(stderr,"Mlr = %e\n",Mlr[i+extra][j]);
 					fprintf(stderr,"bigmass = %e\n",bigmass[i+extra]);
@@ -616,11 +614,7 @@ void collision_resolve_single_fragment(struct collision c){
 					exit(0);
 				}
 				// Normalize fragment distribution equal the mass of the target
-				fragdistsum = 0.0;
-				for (int k = 0; k <= (lr+extra); k++) {
-					fragdistsum += powbigbins[k];
-				}
-				B = 6.*mass[i]/(M_PI*rho*fragdistsum);
+				B = 6.*mass[i]/(M_PI*rho*fragdistsum[lr]);
 				for (int k = 0; k < numbins; k++) {
 					if (k <= lr) {
 						fragmentdist[i][j][k] = B*powsizebins[k];
