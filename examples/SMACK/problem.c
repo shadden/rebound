@@ -81,8 +81,18 @@ const int numbins = 21;
 const double logbinsize = 0.1;
 const int shift = 3;
 
+const int rho = 3.0E3;		// Density (kg m^-3)
+
 double sizebins[21];
 double bigbins[51];
+double mass[21];			// mass bins
+double bigmass[51];		// extrapolated mass bins
+double Qd[51];		// minimum projectile kinetic energy
+double Ecol[51][51];  // collision energy
+double Qsuper[51];// threshold for supercatastrophic fragmentation
+double Mlr[51][51]; // mass of largest fragment
+double powbigbins[51];
+double powsizebins[21];
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -117,7 +127,6 @@ void problem_init(int argc, char* argv[]){
 	
 	// Collision parameters
 	double p0 = 2.5;
-	double rho = 3000.;
 	int nowave = 1;
 	int extra = 30;
 	
@@ -155,6 +164,35 @@ void problem_init(int argc, char* argv[]){
 		}
 	}
 	
+	// Collision energy calculations
+	const double Scon = 3.5e3;                    // strength regime coefficient
+	const double Gcon = 3.0e-8;                   // gravity regime coefficient
+	const double spow = -0.38;                    // strength regime exponent
+	const double gpow = 1.36;                     // gravity regime exponent
+	const double fKE = 1.0;						// Fraction of kinetic energy used
+	{
+		double bigvolume[numbins+extra];	// extrapolated volume bins
+		for (int i=0; i<numbins+extra; i++) {
+			if (i>=extra) {
+				mass[i-extra] = rho*(4./3)*M_PI*pow(sizebins[i-extra]/2.,3); // small array of mass bins
+			}
+			bigvolume[i] = (4./3)*M_PI*pow(bigbins[i]/2.,3); // large array of volume bins
+			bigmass[i] = rho*bigvolume[i]; // large array of mass bins
+			double Qs = Scon*pow(bigbins[i]*100./2,spow); // calculate internal binding energy
+			double Qg = Gcon*rho*pow(bigbins[i]*100./2,gpow); // calculate gravitational binding energy
+			Qd[i] = (1./fKE)*(Qs+Qg); // calculate minimum projectile kinetic energy
+			Qsuper[i] = -2.0*Qd[i]*(0.1-1);
+		}
+	}
+	
+	// Fragment distribution caculations
+	const double n0 = 2.8;			// Index of fragment distribution
+	for (int j = 0; j < numbins+extra; j++) {
+		powbigbins[j] = pow(bigbins[j],3.-n0);
+	}
+	for (int j = 0; j < numbins; j++) {
+		powsizebins[j] = pow(sizebins[j],-1.*n0);
+	}
 	
 	// Setup particle structures
 #ifdef MPI
@@ -381,9 +419,6 @@ void collision_resolve_single_fragment(struct collision c){
 	// Calculate new size distributions
 	
 	// Constants
-	const double fKE = 1.0;		// Fraction of kinetic energy used
-	const int rho = 3.0E3;		// Density (kg m^-3)
-	const double n0 = 2.8;			// Index of fragment distribution
 	const double eqzero = 1.0e-2;
 	const double mconv = 1.98892e30; // conversion from solar units to kg
 	const double dconv = 1.5e11;	  // conversion from AU to m
@@ -391,46 +426,9 @@ void collision_resolve_single_fragment(struct collision c){
 	//const double tconv = 0.159;      // conversion to years
 	const double vol1 = (4./3)*M_PI*pow(p1.r*dconv,3);	// Volume of swarm 1 (m^3)
 	const double vol2 = (4./3)*M_PI*pow(p2.r*dconv,3);  // Volume of swarm 2 (m^3)
-	const double Scon = 3.5e3;                    // strength regime coefficient
-	const double Gcon = 3.0e-8;                   // gravity regime coefficient
-	const double spow = -0.38;                    // strength regime exponent
-	const double gpow = 1.36;                     // gravity regime exponent
 	const double eta = -1.5;                      // supercatastrophic largest remnant exponent
 	const int extra = 30;
 	const int nowave = 1;
-	
-	// Build size bins
-	/*double sizebins[numbins];
-	 for (int i=0; i<numbins; i++) {
-	 sizebins[i] = pow(10,i*logbinsize-shift);
-	 }
-	 double bigbins[numbins+extra];
-	 for (int i=0; i<numbins+extra; i++) {
-	 bigbins[i] = pow(10,i*logbinsize-shift-extra*logbinsize);
-	 }*/
-	
-	/// TODO: Move to problem.c
-	// Calculate minimum projectile size
-	double mass[numbins];			// mass bins
-	double bigmass[numbins+extra];		// extrapolated mass bins
-	double Qd[numbins+extra];		// minimum projectile kinetic energy
-	double Ecol[numbins+extra][numbins+extra];  // collision energy
-	double Qsuper[numbins+extra];// threshold for supercatastrophic fragmentation
-	double Mlr[numbins+extra][numbins+extra]; // mass of largest fragment
-	{
-		double bigvolume[numbins+extra];	// extrapolated volume bins
-		for (int i=0; i<numbins+extra; i++) {
-			if (i>=extra) {
-				mass[i-extra] = rho*(4./3)*M_PI*pow(sizebins[i-extra]/2.,3); // small array of mass bins
-			}
-			bigvolume[i] = (4./3)*M_PI*pow(bigbins[i]/2.,3); // large array of volume bins
-			bigmass[i] = rho*bigvolume[i]; // large array of mass bins
-			double Qs = Scon*pow(bigbins[i]*100./2,spow); // calculate internal binding energy
-			double Qg = Gcon*rho*pow(bigbins[i]*100./2,gpow); // calculate gravitational binding energy
-			Qd[i] = (1./fKE)*(Qs+Qg); // calculate minimum projectile kinetic energy
-			Qsuper[i] = -2.0*Qd[i]*(0.1-1);
-		}
-	}
 	
 	// Velocity calculations
 	struct ghostbox gb = c.gb;
@@ -654,7 +652,6 @@ void collision_resolve_single_fragment(struct collision c){
 					exit(0);
 				}
 				if (Mlr[i][j]/bigmass[i] < (1-pow(10,-3*logbinsize))) {
-					/// TODO: only need to calculate pow(...) once
 					double term = pow(bigbins[j]+bigbins[i],2)*(M_PI/4.);
 					od1arr[i][j] = bigdist2[j]*term*rempath1/vol1;
 					od2arr[i][j] = bigdist1[j]*term*rempath2/vol2;
@@ -700,15 +697,6 @@ void collision_resolve_single_fragment(struct collision c){
 		///////////////////////////////////////////////////////////////////////////////////////
 		// Calculate fragment distributions
 		// Loop through each target
-		// TODO: Move this precalculation into the init routine (it's the same every loop)
-		double powbigbins[numbins+extra];
-		for (int j = 0; j < numbins+extra; j++) {
-			powbigbins[j] = pow(bigbins[j],3.-n0);
-		}
-		double powsizebins[numbins];
-		for (int j = 0; j < numbins; j++) {
-			powsizebins[j] = pow(sizebins[j],-1.*n0);
-		}
 
 		for (int i = 0; i < numbins; i++) {
 			// Loop through each projectile
