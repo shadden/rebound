@@ -248,10 +248,12 @@ struct line tools_linefit(double x[], double y[], int size){
 	double totalxy = 0.0;
 	double totalxx = 0.0;
 	for (int i=0; i<size; i++) {
-		totalx += log10(x[i]);
-		totaly += log10(y[i]);
-		totalxy += log10(x[i])*log10(y[i]);
-		totalxx += log10(x[i])*log10(x[i]);
+		const double log10x = log10(x[i]);
+		const double log10y = log10(y[i]);
+		totalx += log10x;
+		totaly += log10y;
+		totalxy += log10x*log10y;
+		totalxx += log10x*log10x;
 	}
 	double avgx = totalx/size;
 	double avgy = totaly/size;
