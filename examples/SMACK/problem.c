@@ -413,12 +413,9 @@ void collision_resolve_single_fragment(struct collision c){
 	// Calculate minimum projectile size
 	double mass[numbins];			// mass bins
 	double bigmass[numbins+extra];		// extrapolated mass bins
-	double Qs[numbins+extra];		// internal binding energy
-	double Qg[numbins+extra];		// gravitational binding energy
 	double Qd[numbins+extra];		// minimum projectile kinetic energy
 	double Ecol[numbins+extra][numbins+extra];  // collision energy
-	double Qcol[numbins+extra][numbins+extra];  // collision energy/mass of target
-	double Qsuper[numbins+extra][numbins+extra];// threshold for supercatastrophic fragmentation
+	double Qsuper[numbins+extra];// threshold for supercatastrophic fragmentation
 	double Mlr[numbins+extra][numbins+extra]; // mass of largest fragment
 	{
 		double bigvolume[numbins+extra];	// extrapolated volume bins
@@ -428,9 +425,10 @@ void collision_resolve_single_fragment(struct collision c){
 			}
 			bigvolume[i] = (4./3)*M_PI*pow(bigbins[i]/2.,3); // large array of volume bins
 			bigmass[i] = rho*bigvolume[i]; // large array of mass bins
-			Qs[i] = Scon*pow(bigbins[i]*100./2,spow); // calculate internal binding energy
-			Qg[i] = Gcon*rho*pow(bigbins[i]*100./2,gpow); // calculate gravitational binding energy
-			Qd[i] = (1./fKE)*(Qs[i]+Qg[i]); // calculate minimum projectile kinetic energy
+			double Qs = Scon*pow(bigbins[i]*100./2,spow); // calculate internal binding energy
+			double Qg = Gcon*rho*pow(bigbins[i]*100./2,gpow); // calculate gravitational binding energy
+			Qd[i] = (1./fKE)*(Qs+Qg); // calculate minimum projectile kinetic energy
+			Qsuper[i] = -2.0*Qd[i]*(0.1-1);
 		}
 	}
 	
@@ -645,13 +643,12 @@ void collision_resolve_single_fragment(struct collision c){
 			od2[i] = 0.0;
 			for (int j=0; j<numbins+extra; j++) {
 				Ecol[i][j] = 0.5*bigmass[i]*bigmass[j]*newrelv*newrelv/(bigmass[i]+bigmass[j]);
-				Qcol[i][j] = Ecol[i][j]/bigmass[i];
-				Qsuper[i][j] = -2.0*Qd[i]*(0.1-1);
+				double Qcol = Ecol[i][j]/bigmass[i];  // collision energy/mass of target
 				// Calculate size of largest remnant from collisional energy
-				if (Qcol[i][j] >= Qsuper[i][j]) {
-					Mlr[i][j] = bigmass[i]*(0.1/pow(1.8,eta))*pow(Qcol[i][j]/Qd[i],eta);
+				if (Qcol >= Qsuper[i]) {
+					Mlr[i][j] = bigmass[i]*(0.1/pow(1.8,eta))*pow(Qcol/Qd[i],eta);
 				} else {
-					Mlr[i][j] = bigmass[i]*(-0.5*((Qcol[i][j]/Qd[i])-1)+0.5);
+					Mlr[i][j] = bigmass[i]*(-0.5*((Qcol/Qd[i])-1)+0.5);
 				}
 				if (Mlr[i][j] < 0.0) {
 					fprintf(stderr,"Error -- Mlr is less than zero \nEnding program\n");
