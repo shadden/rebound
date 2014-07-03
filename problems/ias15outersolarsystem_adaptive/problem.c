@@ -47,13 +47,11 @@ extern int display_wire;
 
 double energy();
 double energy_init;
-double dt_init;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
-	dt 		= input_get_double(argc,argv,"dt",10);			// days
-	dt_init 	= dt;
-	tmax		= 300;
+	dt 		= input_get_double(argc,argv,"dt",1.);			// days
+	tmax		= 1e4*365.;
 	G		= k*k;
 
 	integrator_epsilon = input_get_double(argc,argv,"integrator_epsilon",0.01);
@@ -61,30 +59,37 @@ void problem_init(int argc, char* argv[]){
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL
-	init_boxwidth(15); 			// Init box with width 200 astronomical units
+	init_boxwidth(150); 			// Init box with width 200 astronomical units
+
 
 	// Initial conditions
-	struct particle sun =
-	{
-		.x=6.593800371287371E-03, .y=-2.573275629077807E-03, .z=-1.854371344760243E-04,
-		.vx=5.866373446610065E-06, .vy=5.978581888364996E-06, .vz=-1.851178619025565E-07,
-		.m=1
-	};
-	struct particle voyager2 = 
-	{
-		.x=-3.328968405165462E+00, .y=3.595274973574348E+00, .z=1.055605715801159E-01,
-    		.vx=-6.272513643528150E-03, .vy=8.538092828648276E-05, .vz=-2.918749260831602E-04,
-		.m=0
-	};
-	struct particle jupiter = {
-		.x=-3.375322482238153E+00, .y=4.076291424675519E+00, .z=5.880202039957691E-02,
-		.vx=-5.897136160687823E-03, .vy=-4.466495066177508E-03, .vz= 1.504313968911784E-04,
-		.m=0.000954532562
-	};
 	
-	particles_add(sun);
-	particles_add(jupiter);
-	particles_add(voyager2);
+	struct particle star; 
+	star.m  = 1;
+	star.x  = 0; star.y  = 0; star.z  = 0; 
+	star.vx = 0; star.vy = 0; star.vz = 0;
+	particles_add(star); 
+	
+	// The planet (a zero mass test particle)
+	struct particle planet; 
+	planet.m  = 0;
+	double e_testparticle = 0;
+	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
+	planet.vx = 0; planet.vy = sqrt(G*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
+	particles_add(planet); 
+	
+	// The perturber
+	struct particle perturber; 
+	perturber.x  = 10; perturber.y  = 0; perturber.z  = 0; 
+	double inc_perturber = 89.9;
+	perturber.vx = 0; 
+	perturber.m  = 0.1;
+	perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+	particles_add(perturber); 
+
+
+
 
 	// create file for mercury
 	FILE* of = fopen("big.in","w"); 
@@ -172,15 +177,7 @@ double energy(){
 
 	return mpf_get_d(energy_kinetic);
 }
-int next_exit = 0;
 void problem_output(){
-	if (next_exit){
-		exit_simulation = 1;
-	}
-	if (t+dt>=tmax){
-		next_exit = 1;
-		dt = tmax-t;
-	}
 }
 
 void problem_finish(){
@@ -188,14 +185,4 @@ void problem_finish(){
 	double rel_energy = fabs((energy()-energy_init)/energy_init);
 	fprintf(of,"%e",rel_energy);
 	fclose(of);
-	{
-	FILE* of = fopen("position.txt","a+"); 
-	fprintf(of,"%.20e\t",dt_init);
-	fprintf(of,"%.20e\t",integrator_epsilon);
-	fprintf(of,"%.20e\t",particles[2].x-particles[0].x);
-	fprintf(of,"%.20e\t",particles[2].y-particles[0].y);
-	fprintf(of,"%.20e\n",particles[2].z-particles[0].z);
-	fclose(of);
-	printf("\ntie %.25e\n",t);
-	}
 }
