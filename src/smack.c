@@ -554,7 +554,7 @@ void collision_resolve_single_fragment(struct collision c){
 					fprintf(stderr,"Error -- Mlr is less than zero \nEnding program\n");
 					exit(0);
 				}
-				if (Mlr[i][j]/bigmass[i] < (1-pow(10,-3*logbinsize))) {
+				if (Mlr[i][j]/bigmass[i] < powlogbinsize) {
 					double term = pow(bigbins[j]+bigbins[i],2)*(M_PI/4.);
 					od1arr[i][j] = bigdist2[j]*term*rempath1/vol1;
 					od2arr[i][j] = bigdist1[j]*term*rempath2/vol2;

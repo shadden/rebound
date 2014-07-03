@@ -50,6 +50,7 @@ extern int Nmax;
 
 const int nowave = 1; // Flag to remove size distribution wave by extrapolation
 const double logbinsize = 0.1; // bin size for size distribution
+double powlogbinsize;	// calculated in problem_init
 const int shift = 3;		// for building size distribution
 const int rho = 3.0E3;		// Density (kg m^-3)
 
@@ -129,6 +130,7 @@ void problem_init(int argc, char* argv[]){
 			bigbins[i] = pow(10,i*logbinsize-shift-extra*logbinsize);
 		}
 	}
+	powlogbinsize = 1.-pow(10.,-3.*logbinsize);
 	
 	// Collision energy pre-calculations
 	const double Scon = 3.5e3;	// Strength regime coefficient
