@@ -1,7 +1,9 @@
 PROBLEMDIR=$(shell basename `dirname \`pwd\``)"/"$(shell basename `pwd`)
 export OPENGL=0
+export OPENMP=1
 export PROFILING=0
 export OPT=-g -O3 -DFRAGMENTATION_SMACK
+
 
 all:
 	# Setup link to different modules

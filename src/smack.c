@@ -340,6 +340,7 @@ void collision_resolve_single_fragment(struct collision c){
 	const double vol1 = (4./3)*M_PI*pow(p1.r*dconv,3);	// Volume of swarm 1 (m^3)
 	const double vol2 = (4./3)*M_PI*pow(p2.r*dconv,3);  // Volume of swarm 2 (m^3)
 	const double eta = -1.5;                      // supercatastrophic largest remnant exponent
+	const double eta18 = pow(1.8,eta);
 	
 	// Velocity calculations
 	struct ghostbox gb = c.gb;
@@ -409,7 +410,6 @@ void collision_resolve_single_fragment(struct collision c){
 	}
 	
 	// Check for maximum optical depth
-	double maxod = 0.0; // max optical depth
 	double od1[numbins+extra]; // total optical depth for each bin in SP 1 due to SP 2
 	double od2[numbins+extra]; // total optical depth for each bin in SP 2 due to SP 1
 	double od1arr[numbins+extra][numbins+extra];	// [target][projectile]
@@ -537,7 +537,7 @@ void collision_resolve_single_fragment(struct collision c){
 		
 		////////////////////////////////////////////////////////////////////////////
 		// Calculate optical depth
-		maxod = 0.0;
+#pragma omp parallel for 
 		for (int i=0; i<numbins+extra; i++) {
 			od1[i] = 0.0;
 			od2[i] = 0.0;
@@ -546,7 +546,7 @@ void collision_resolve_single_fragment(struct collision c){
 				double Qcol = Ecol[i][j]/bigmass[i];  // collision energy/mass of target
 				// Calculate size of largest remnant from collisional energy
 				if (Qcol >= Qsuper[i]) {
-					Mlr[i][j] = bigmass[i]*(0.1/pow(1.8,eta))*pow(Qcol/Qd[i],eta);
+					Mlr[i][j] = bigmass[i]*(0.1/eta18)*pow(Qcol/Qd[i],eta);
 				} else {
 					Mlr[i][j] = bigmass[i]*(-0.5*((Qcol/Qd[i])-1)+0.5);
 				}
@@ -555,7 +555,8 @@ void collision_resolve_single_fragment(struct collision c){
 					exit(0);
 				}
 				if (Mlr[i][j]/bigmass[i] < powlogbinsize) {
-					double term = pow(bigbins[j]+bigbins[i],2)*(M_PI/4.);
+					double term = bigbins[j]+bigbins[i];
+					term = term*term*(M_PI/4.);
 					od1arr[i][j] = bigdist2[j]*term*rempath1/vol1;
 					od2arr[i][j] = bigdist1[j]*term*rempath2/vol2;
 				} else {
@@ -565,6 +566,9 @@ void collision_resolve_single_fragment(struct collision c){
 				od1[i] += od1arr[i][j];
 				od2[i] += od2arr[i][j];
 			}
+		}
+		double maxod = 0.0; // max optical depth
+		for (int i=0; i<numbins+extra; i++) {
 			// Calculate max optical depth
 			if (od1[i] >= maxod && i >= extra) {
 				maxod = od1[i];
