@@ -75,7 +75,7 @@ void problem_init(int argc, char* argv[]){
 	root_nx = 2;
 	root_ny = 2;
 	dt = 1.0/0.159;		// Timestep (years->code units)
-	tmax = (1.0e2+1)*dt;// Max time
+	tmax = (1.0e8+1)*dt;// Max time
 	init_box();
 	
 	// Change collision_resolve routing from default.
