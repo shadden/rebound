@@ -26,7 +26,7 @@ struct line {
 	double slope;
 	double intercept;
 };
-
+// TODO: Consider fitting power law in linear space rather than line in log space
 struct line tools_linefit(double x[], double y[], int size);
 
 struct line tools_linefit(double x[], double y[], int size){
