@@ -110,26 +110,9 @@ void problem_output(){
 	if (output_check(1000.*dt)){
 		output_timing();
 	}
-	output_append_orbits("orbits.txt");
-	FILE* output_file = fopen("myownorbits.txt","a");
-	
-	double star_x = particles[0].x;
-	double star_y = particles[0].y;
-
-	double star_vx = particles[0].vx;
-	double star_vy = particles[0].vy;
-
-	double planet_x = particles[1].x;
-	double planet_y = particles[1].y;
-
-	double planet_vx = particles[1].vx;
-	double planet_vy = particles[1].vy;
-	
-	double a =  .... fill out ... ;
-
-
-	fprintf(output_file,"%e \t %e\n",t,a)
-	fclose(output_file);
+	if (output_check(3652422.)){ 	// output heliocentric orbital elements every 10000 years
+		output_append_orbits("orbits.txt");
+	}
 }
 
 void problem_finish(){

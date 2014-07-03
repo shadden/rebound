@@ -57,14 +57,21 @@ void problem_init(int argc, char* argv[]){
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 6; root_ny = 4; root_nz = 1;
-	nghostx = 1; nghosty = 1; nghostz = 0; 			// Use two ghost rings
+#ifdef OPENGL
+	display_rotate_z		= 20;			// Rotate the box by 20 around the z axis, then 
+	display_rotate_x		= 60;			// rotate the box by 60 degrees around the x axis	
+#ifdef LIBPNG
+	system("mkdir png");
+#endif // LIBPNG
+#endif // OPENGL
+	root_nx = 2; root_ny = 2; root_nz = 1;
+	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
 	double particle_radius_max 	= 4;			// m
 	double particle_radius_slope 	= -3;	
-	boxsize 			= 800;			// m
+	boxsize 			= 100;			// m
 	if (argc>1){						// Try to read boxsize from command line
 		boxsize = atof(argv[1]);
 	}
