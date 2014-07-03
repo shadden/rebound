@@ -397,17 +397,8 @@ void collision_resolve_single_fragment(struct collision c){
 	}
 	
 	// Initialize arrays for loss, survivors, and fragments
-	double loss1[numbins];      // loss from SP 1
-	double loss2[numbins];      // loss from SP 2
 	double survivors1[numbins]; // survivors in SP 1
 	double survivors2[numbins]; // survivors in SP 2
-	double fragments1[numbins]; // fragments from SP 1
-	double fragments2[numbins]; // frgments from SP 2
-	// Initialize fragment arrays
-	for (int i = 0; i < numbins; i++){
-		fragments1[i] = 0.0;
-		fragments2[i] = 0.0;
-	}
 	
 	// Check for maximum optical depth
 	double od1[numbins+extra]; // total optical depth for each bin in SP 1 due to SP 2
@@ -452,8 +443,6 @@ void collision_resolve_single_fragment(struct collision c){
 	double sizebins1[fitlength]; // subset of size bins to use for extrapolation
 	double sizebins2[fitlength]; // subset of size bins to use for extrapolation
 	
-	int lr; // index of largest fragment
-	double B; // normalization for fragment distribution
 	double fragmentdist[numbins][numbins+extra][numbins];	// fragment distribution [target] [projectile] [fragments]
 	
 	int empty1, empty2, empty;
@@ -537,8 +526,9 @@ void collision_resolve_single_fragment(struct collision c){
 		
 		////////////////////////////////////////////////////////////////////////////
 		// Calculate optical depth
+		const int loopcount = numbins+extra;
 #pragma omp parallel for 
-		for (int i=0; i<numbins+extra; i++) {
+		for (int i=0; i<loopcount; i++) {
 			od1[i] = 0.0;
 			od2[i] = 0.0;
 			for (int j=0; j<numbins+extra; j++) {
@@ -602,10 +592,11 @@ void collision_resolve_single_fragment(struct collision c){
 		// Calculate fragment distributions
 		// Loop through each target
 		
+#pragma omp parallel for 
 		for (int i = 0; i < numbins; i++) {
 			// Loop through each projectile
 			for (int j = 0; j < numbins+extra; j++) {
-				lr = 0;
+				int lr = 0; // index of largest fragment
 				// Find index of largest fragment
 				while (mass[lr] < Mlr[i+extra][j]) {
 					lr ++;
@@ -618,7 +609,7 @@ void collision_resolve_single_fragment(struct collision c){
 					exit(0);
 				}
 				// Normalize fragment distribution equal the mass of the target
-				B = 6.*mass[i]/(M_PI*rho*fragdistsum[lr]);
+				double B = 6.*mass[i]/(M_PI*rho*fragdistsum[lr]);
 				for (int k = 0; k < numbins; k++) {
 					if (k <= lr) {
 						fragmentdist[i][j][k] = B*powsizebins[k];
@@ -629,6 +620,9 @@ void collision_resolve_single_fragment(struct collision c){
 			}
 		}
 		
+		double fragments1[numbins]; // fragments from SP 1
+		double fragments2[numbins]; // frgments from SP 2
+		// Initialize fragment arrays
 		for (int i=0; i<numbins; i++) {
 			fragments1[i] = 0.0;
 			fragments2[i] = 0.0;
@@ -640,25 +634,27 @@ void collision_resolve_single_fragment(struct collision c){
 			double EL1 = 0.0;  // energy loss per bin in SP 1
 			double EL2 = 0.0;  // energy loss per bin in SP 2
 			// Calculate loss from each bin
-			loss1[i] = od1[i+extra]*newdist1[i];
-			loss2[i] = od2[i+extra]*newdist2[i];
+			double loss1 = od1[i+extra]*newdist1[i];
+			double loss2 = od2[i+extra]*newdist2[i];
 			for (int j=0; j<numbins+extra; j++) {
 				// Add to energy loss
 				// Each planetesimal in each collision loses half the collisional energy
-				EL1 += 0.5*Ecol[i][j]*loss1[i];
-				EL2 += 0.5*Ecol[i][j]*loss2[i];
+				EL1 += 0.5*Ecol[i][j]*loss1;
+				EL2 += 0.5*Ecol[i][j]*loss2;
 			}
 			// Total energy loss
 			Eloss1 += EL1;
 			Eloss2 += EL2;
 			// Number of survivors
-			survivors1[i] = newdist1[i] - loss1[i];
-			survivors2[i] = newdist2[i] - loss2[i];
+			survivors1[i] = newdist1[i] - loss1;
+			survivors2[i] = newdist2[i] - loss2;
 			// Add fragments to smaller bins
-			for (int k = 0; k < i; k++) {
-				for (int j = 0; j < numbins+extra; j++) {
-					fragments1[k] += od1arr[i+extra][j]*newdist1[i]*fragmentdist[i][j][k];
-					fragments2[k] += od2arr[i+extra][j]*newdist2[i]*fragmentdist[i][j][k];
+			for (int j = 0; j < numbins+extra; j++) {
+				double prefac1 = od1arr[i+extra][j]*newdist1[i];
+				double prefac2 = od2arr[i+extra][j]*newdist2[i];
+				for (int k = 0; k < i; k++) {
+					fragments1[k] += prefac1*fragmentdist[i][j][k];
+					fragments2[k] += prefac2*fragmentdist[i][j][k];
 				}
 			}
 		}
