@@ -25,9 +25,9 @@ function runepsilon {
 function rundt {
 	echo "Running mercury dt $1"
 	rm -f ../energy_$1.txt
-	points=20
-	min=2
-	max=3
+	points=4
+	min=1
+	max=4
 	for i in $(seq 0 $points)
 	do 
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)

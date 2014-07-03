@@ -72,7 +72,7 @@ void problem_init(int argc, char* argv[]){
 	
 	// The planet (a zero mass test particle)
 	struct particle planet; 
-	planet.m  = 0;
+	planet.m  = 0.0001;
 	double e_testparticle = 0;
 	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
 	planet.vx = 0; planet.vy = sqrt(G*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
