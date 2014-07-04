@@ -406,7 +406,7 @@ int integrator_ias15_step() {
 		
 		if (dt_new<integrator_min_dt) dt_new = integrator_min_dt;
 		
-		if (fabs(dt_new/dt_done) < 1.0) {	// New timestep is smaller.
+		if (fabs(dt_new/safety_factor/dt_done) < 1.0) {	// New timestep is smaller.
 			if (dt_done>integrator_min_dt){
 				particles = particles_in;
 				dt = dt_new;
