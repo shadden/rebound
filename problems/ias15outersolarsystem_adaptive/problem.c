@@ -72,7 +72,7 @@ void problem_init(int argc, char* argv[]){
 	
 	// The planet (a zero mass test particle)
 	struct particle planet; 
-	planet.m  = 0.0001;
+	planet.m  = 0.01;
 	double e_testparticle = 0;
 	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
 	planet.vx = 0; planet.vy = sqrt(G*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
@@ -81,6 +81,7 @@ void problem_init(int argc, char* argv[]){
 	// The perturber
 	struct particle perturber; 
 	perturber.x  = 10; perturber.y  = 0; perturber.z  = 0; 
+	//double inc_perturber = 80.;
 	double inc_perturber = 89.9;
 	perturber.vx = 0; 
 	perturber.m  = 0.1;
@@ -178,6 +179,14 @@ double energy(){
 	return mpf_get_d(energy_kinetic);
 }
 void problem_output(){
+	/*
+	if(output_check(3.)){
+		struct orbit o = tools_p2orbit(particles[1], particles[0]);
+		FILE* of = fopen("orbit.txt","a+"); 
+		fprintf(of,"%e\t%e\t%e\n",t,o.a,o.e);
+		fclose(of);
+	}
+	*/
 }
 
 void problem_finish(){

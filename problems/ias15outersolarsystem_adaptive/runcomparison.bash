@@ -4,7 +4,7 @@ function runepsilon {
 	rm -f ../energy_$1.txt
 	points=20
 	min=-10
-	max=-2
+	max=-5
 	for i in $(seq 0 $points)
 	do 
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
@@ -25,8 +25,8 @@ function runepsilon {
 function rundt {
 	echo "Running mercury dt $1"
 	rm -f ../energy_$1.txt
-	points=4
-	min=1
+	points=7
+	min=0
 	max=4
 	for i in $(seq 0 $points)
 	do 
@@ -47,10 +47,10 @@ function rundt {
 }
 function runepsilonnbody {
 	echo "Running REBOUND epsilon"
-	rm -f ../energy_$1.txt
-	points=20
+	rm -f energy_ias15.txt
+	points=10
 	min=-3
-	max=3
+	max=0
 	for i in $(seq 0 $points)
 	do 
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
@@ -63,7 +63,6 @@ function runepsilonnbody {
 	done
 }
 
-rm -f energy_*.txt
 make ias15
 runepsilonnbody
 
