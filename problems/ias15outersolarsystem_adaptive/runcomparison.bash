@@ -82,11 +82,11 @@ make problemgenerator
 
 
 
-for i in $(seq 0 3)
+for t in $(seq 0 3)
 do
-	echo "Running test case $i"
+	echo "Running test case $t"
 
-	./problemgenerator --testcase=$i
+	./problemgenerator --testcase=$t
 
 	make ra15
 	runepsilonnbody ra15 -10 -8
@@ -106,9 +106,9 @@ do
 	rundt mvs 
 	popd
 
-	rm -rf testcase_$1
-	mkdir testcase_$1
-	mv energy*.txt testcase_$1/
+	rm -rf testcase_$t
+	mkdir testcase_$t
+	mv energy*.txt testcase_$t/
 
 done
 exit
