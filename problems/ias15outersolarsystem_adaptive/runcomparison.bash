@@ -82,7 +82,7 @@ make problemgenerator
 
 
 
-for t in $(seq 0 3)
+for t in $(seq 4 4)
 do
 	echo "Running test case $t"
 
