@@ -5,8 +5,8 @@
 )---------------------------------------------------------------------
  algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = SCHEME
  start time (days)=  0d0
- stop time (days) = 3650000d0
- output interval (days) = 3650000d0
+ stop time (days) = TMAX
+ output interval (days) = TMAX
  timestep (days) = STEPSIZE
  accuracy parameter = EPSILON
 )---------------------------------------------------------------------
@@ -26,7 +26,7 @@
 )---------------------------------------------------------------------
  ejection distance (AU)= 1000
  radius of central body (AU) = 0
- central mass (solar) = 1.0
+ central mass (solar) = CENTRALMASS
  central J2 = 0
  central J4 = 0
  central J6 = 0

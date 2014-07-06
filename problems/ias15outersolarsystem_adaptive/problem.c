@@ -40,7 +40,6 @@
 #include "particle.h"
 #include "boundaries.h"
 
-const double k	 	= 0.01720209895;	// Gaussian constant 
 #ifdef OPENGL
 extern int display_wire;
 #endif // OPENGL
@@ -51,7 +50,7 @@ double energy_init;
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= input_get_double(argc,argv,"dt",1.);			// days
-	tmax		= 1e4*365.;
+	const double k 	= 0.01720209895;	// Gaussian constant 
 	G		= k*k;
 
 	integrator_epsilon = input_get_double(argc,argv,"integrator_epsilon",0.01);
@@ -69,27 +68,30 @@ void problem_init(int argc, char* argv[]){
 	star.x  = 0; star.y  = 0; star.z  = 0; 
 	star.vx = 0; star.vy = 0; star.vz = 0;
 	particles_add(star); 
+
+	double semia = 0.01;
 	
 	// The planet (a zero mass test particle)
 	struct particle planet; 
-	planet.m  = 0.01;
+	planet.m  = 0.01*star.m;
 	double e_testparticle = 0;
-	planet.x  = 1.-e_testparticle; planet.y  = 0; planet.z  = 0; 
-	planet.vx = 0; planet.vy = sqrt(G*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
+	planet.x  = semia*(1.-e_testparticle); planet.y  = 0; planet.z  = 0; 
+	planet.vx = 0; planet.vy = sqrt(G*star.m/semia*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
 	particles_add(planet); 
 	
 	// The perturber
 	struct particle perturber; 
-	perturber.x  = 10; perturber.y  = 0; perturber.z  = 0; 
+	perturber.x  = semia*10.; perturber.y  = 0; perturber.z  = 0; 
 	//double inc_perturber = 80.;
 	double inc_perturber = 89.9;
 	perturber.vx = 0; 
-	perturber.m  = 0.1;
+	perturber.m  = 0.1*star.m;
 	perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
 	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
 	particles_add(perturber); 
 
 
+	tmax		= 1e4*365.*sqrt(semia*semia*semia/star.m);
 
 
 	// create file for mercury
@@ -106,6 +108,14 @@ void problem_init(int argc, char* argv[]){
 		fprintf(of," %.16e %.16e %.16e\n",particles[i].vx,particles[i].vy,particles[i].vz);
 		fprintf(of," 0. 0. 0.\n");
 	}
+	fclose(of);
+	
+	of = fopen("centralmass.in","w"); 
+	fprintf(of,"%e",star.m);
+	fclose(of);
+	
+	of = fopen("tmax.in","w"); 
+	fprintf(of,"%e",tmax);
 	fclose(of);
 
 
