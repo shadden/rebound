@@ -16,13 +16,12 @@ function runepsilon {
 		rm -f *.out
 		sed "s/EPSILON/$e/g" param.template > param.template2
 		sed "s/SCHEME/$1/g" param.template2 > param.template3
-		sed "s/TMAX/$tmax/g" param.template3 > param.template4
-		sed "s/CENTRALMASS/$centralmass/g" param.template4 > param.template5
-		sed "s/STEPSIZE/1/g" param.template5 > param.in
-		utime="$( TIMEFORMAT='%R';time ( ./mercury6 ) 2>&1 1>/dev/null )"
+		sed "s/STEPSIZE/1/g" param.template3 > param.in
+		utime="$( TIMEFORMAT='%R';time ( doalarm 10  ./mercury6 ) 2>&1 1>/dev/null )"
 		energy="$(../mercury_read/mercury_energy big.in big.dmp)"
 		echo "$utime $energy $e" >> ../energy_$1.txt 
 		echo "$utime $energy $e"  
+		rm -f param.template?
 
 	done
 }
@@ -43,13 +42,12 @@ function rundt {
 		rm -f *.out
 		sed "s/EPSILON/1/g" param.template > param.template2
 		sed "s/SCHEME/$1/g" param.template2 > param.template3
-		sed "s/TMAX/$tmax/g" param.template3 > param.template4
-		sed "s/CENTRALMASS/$centralmass/g" param.template4 > param.template5
-		sed "s/STEPSIZE/$e/g" param.template5 > param.in
-		utime="$( TIMEFORMAT='%R';time ( ./mercury6 ) 2>&1 1>/dev/null )"
+		sed "s/STEPSIZE/$e/g" param.template3 > param.in
+		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./mercury6 ) 2>&1 1>/dev/null )"
 		energy="$(../mercury_read/mercury_energy big.in big.dmp)"
 		echo "$utime $energy $e" >> ../energy_$1.txt 
 		echo "$utime $energy $e"  
+		rm -f param.template?
 
 	done
 }
@@ -63,13 +61,17 @@ function runepsilonnbody {
 	do 
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
 		e=$(echo "scale=10; e($exp*l(10))"  | bc -l )
-		utime="$( TIMEFORMAT='%R';time ( ./nbody --integrator_epsilon=$e 2>&1 ) 2>&1 1>/dev/null )"
+		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$e 2>&1 ) 2>&1 1>/dev/null )"
 		energy="$(cat energy.txt)"
 		echo "$utime $energy $e" >> energy_$1.txt 
 		echo "$utime $energy $e"  
 
 	done
 }
+
+make problemgenerator
+./problemgenerator --testcase=0
+
 make ra15
 runepsilonnbody ra15 -10 -8
 

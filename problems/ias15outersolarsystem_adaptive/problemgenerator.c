@@ -13,6 +13,7 @@ const double G	= 0.01720209895*0.01720209895;
 double tmax;
 
 int input_get_int(int argc, char** argv, const char* argument, int _default);
+void output_binary(char* filename);
 
 int main(int argc, char* argv[]){
 	particles = calloc(sizeof(struct particle),1000); // more then needed
@@ -96,7 +97,7 @@ int main(int argc, char* argv[]){
 	}
 
 
-
+	output_binary("particles.bin");
 
 	FILE* of;
 	
@@ -195,4 +196,15 @@ int input_get_int(int argc, char** argv, const char* argument, int _default){
 		return atoi(value);
 	}
 	return _default;
+}
+
+void output_binary(char* filename){
+	FILE* of = fopen(filename,"wb"); 
+	fwrite(&N,sizeof(int),1,of);
+	fwrite(&tmax,sizeof(double),1,of);
+	for (int i=0;i<N;i++){
+		struct particle p = particles[i];
+		fwrite(&(p),sizeof(struct particle),1,of);
+	}
+	fclose(of);
 }

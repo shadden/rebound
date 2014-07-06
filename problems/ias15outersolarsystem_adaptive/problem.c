@@ -46,6 +46,7 @@ extern int display_wire;
 
 double energy();
 double energy_init;
+void input_binary_special(char* filename);
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -55,70 +56,13 @@ void problem_init(int argc, char* argv[]){
 
 	integrator_epsilon = input_get_double(argc,argv,"integrator_epsilon",0.01);
 	integrator_force_is_velocitydependent = 0;
+	
 #ifdef OPENGL
 	display_wire	= 1;			// Show orbits.
 #endif // OPENGL
 	init_boxwidth(150); 			// Init box with width 200 astronomical units
 
-
-	// Initial conditions
-	
-	struct particle star; 
-	star.m  = 1;
-	star.x  = 0; star.y  = 0; star.z  = 0; 
-	star.vx = 0; star.vy = 0; star.vz = 0;
-	particles_add(star); 
-
-	double semia = 0.01;
-	
-	// The planet (a zero mass test particle)
-	struct particle planet; 
-	planet.m  = 0.01*star.m;
-	double e_testparticle = 0;
-	planet.x  = semia*(1.-e_testparticle); planet.y  = 0; planet.z  = 0; 
-	planet.vx = 0; planet.vy = sqrt(G*star.m/semia*(1.+e_testparticle)/(1.-e_testparticle)); planet.vz = 0;
-	particles_add(planet); 
-	
-	// The perturber
-	struct particle perturber; 
-	perturber.x  = semia*10.; perturber.y  = 0; perturber.z  = 0; 
-	//double inc_perturber = 80.;
-	double inc_perturber = 89.9;
-	perturber.vx = 0; 
-	perturber.m  = 0.1*star.m;
-	perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
-	perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
-	particles_add(perturber); 
-
-
-	tmax		= 1e4*365.*sqrt(semia*semia*semia/star.m);
-
-
-	// create file for mercury
-	FILE* of = fopen("big.in","w"); 
-	fprintf(of,")O+_06 Big-body initial data  (WARNING: Do not delete this line!!)\n");
-	fprintf(of,") Lines beginning with `)' are ignored.\n");
-	fprintf(of,")---------------------------------------------------------------------\n");
-	fprintf(of," style (Cartesian, Asteroidal, Cometary) = Cartesian\n");
-	fprintf(of," epoch (in days) = 0.0\n");
-	fprintf(of,")---------------------------------------------------------------------\n");
-	for (int i=1;i<N;i++){
-		fprintf(of,"NAME%i m=%.16e \n",i,particles[i].m);
-		fprintf(of," %.16e %.16e %.16e\n",particles[i].x,particles[i].y,particles[i].z);
-		fprintf(of," %.16e %.16e %.16e\n",particles[i].vx,particles[i].vy,particles[i].vz);
-		fprintf(of," 0. 0. 0.\n");
-	}
-	fclose(of);
-	
-	of = fopen("centralmass.in","w"); 
-	fprintf(of,"%e",star.m);
-	fclose(of);
-	
-	of = fopen("tmax.in","w"); 
-	fprintf(of,"%e",tmax);
-	fclose(of);
-
-
+	input_binary_special("particles.bin");
 
 #ifndef INTEGRATOR_WH
 	// Move to barycentric frame
@@ -205,3 +149,18 @@ void problem_finish(){
 	fprintf(of,"%e",rel_energy);
 	fclose(of);
 }
+
+void input_binary_special(char* filename){
+	FILE* inf = fopen(filename,"rb"); 
+	long objects = 0;
+	int _N;
+	objects += fread(&_N,sizeof(int),1,inf);
+	objects += fread(&tmax,sizeof(double),1,inf);
+	for (int i=0;i<_N;i++){
+		struct particle p;
+		objects += fread(&p,sizeof(struct particle),1,inf);
+		particles_add(p);
+	}
+	fclose(inf);
+}
+
