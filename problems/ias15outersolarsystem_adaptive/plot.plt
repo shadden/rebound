@@ -2,7 +2,7 @@
 set output "plot.pdf" 
 set terminal pdf color enhanced size 6in,5in
 set xlabel "time to complete run [s]"
-set ylabel "relative energy after 10000 yrs"
+set ylabel "relative energy after 10000 orbits"
 set logscale xy
 set autoscale fix
 set yrange [:1]

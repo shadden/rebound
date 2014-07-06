@@ -47,6 +47,7 @@ extern int display_wire;
 double energy();
 double energy_init;
 void input_binary_special(char* filename);
+int init_N;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -63,6 +64,7 @@ void problem_init(int argc, char* argv[]){
 	init_boxwidth(150); 			// Init box with width 200 astronomical units
 
 	input_binary_special("particles.bin");
+	init_N = N;
 
 #ifndef INTEGRATOR_WH
 	// Move to barycentric frame
@@ -146,6 +148,9 @@ void problem_output(){
 void problem_finish(){
 	FILE* of = fopen("energy.txt","w"); 
 	double rel_energy = fabs((energy()-energy_init)/energy_init);
+	if (init_N!=N){
+		rel_energy = -1;
+	}
 	fprintf(of,"%e",rel_energy);
 	fclose(of);
 }
