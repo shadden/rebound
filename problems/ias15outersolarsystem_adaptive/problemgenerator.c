@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
 	switch (testcase){
 		case 0: // Kozai  89.8
 		{
-			double semia = 0.01;
+			double semia = 1.0;
 
 			struct particle star; 
 			star.m  = 1;
@@ -58,6 +58,78 @@ int main(int argc, char* argv[]){
 		}
 		case 1: // Kozai  80
 		{
+			double semia = 1.0;
+
+			struct particle star; 
+			star.m  = 1;
+			star.x  = 0; star.y  = 0; star.z  = 0; 
+			star.vx = 0; star.vy = 0; star.vz = 0;
+			particles[N++] = star;
+
+			
+			// The planet 
+			struct particle planet; 
+			planet.m  = 0.01*star.m;
+			planet.x  = semia; 
+			planet.y  = 0; 
+			planet.z  = 0; 
+			planet.vx = 0; 
+			planet.vy = sqrt(G*star.m/semia); 
+			planet.vz = 0;
+			particles[N++] = planet;
+			
+			// The perturber
+			struct particle perturber; 
+			perturber.m  = 0.1*star.m;
+			perturber.x  = semia*10.; 
+			perturber.y  = 0; 
+			perturber.z  = 0; 
+			double inc_perturber =  80.;
+			perturber.vx = 0; 
+			perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+			perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+			particles[N++] = perturber;
+			tmax	= 1e4*365.*sqrt(semia*semia*semia/star.m);
+			break;
+		}
+		case 2: // Kozai  89.8, size = 0.01
+		{
+			double semia = 0.01;
+
+			struct particle star; 
+			star.m  = 1;
+			star.x  = 0; star.y  = 0; star.z  = 0; 
+			star.vx = 0; star.vy = 0; star.vz = 0;
+			particles[N++] = star;
+
+			
+			// The planet 
+			struct particle planet; 
+			planet.m  = 0.01*star.m;
+			planet.x  = semia; 
+			planet.y  = 0; 
+			planet.z  = 0; 
+			planet.vx = 0; 
+			planet.vy = sqrt(G*star.m/semia); 
+			planet.vz = 0;
+			particles[N++] = planet;
+			
+			// The perturber
+			struct particle perturber; 
+			perturber.m  = 0.1*star.m;
+			perturber.x  = semia*10.; 
+			perturber.y  = 0; 
+			perturber.z  = 0; 
+			double inc_perturber = 89.9; // 80.
+			perturber.vx = 0; 
+			perturber.vy = cos(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+			perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
+			particles[N++] = perturber;
+			tmax	= 1e4*365.*sqrt(semia*semia*semia/star.m);
+			break;
+		}
+		case 3: // Kozai  80 size = 0.01
+		{
 			double semia = 0.01;
 
 			struct particle star; 
@@ -92,7 +164,9 @@ int main(int argc, char* argv[]){
 			tmax	= 1e4*365.*sqrt(semia*semia*semia/star.m);
 			break;
 		}
-		case 2:
+		default:
+			printf("test case not found\n");
+			exit(-1);
 			break;
 	}
 

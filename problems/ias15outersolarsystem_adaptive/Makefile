@@ -44,7 +44,7 @@ doc: all
 	$(MAKE) -C ../../src/ doc
 
 problemgenerator: problemgenerator.c
-	gcc -o problemgenerator problemgenerator.c
+	gcc -DCOLLISIONS_NONE -o problemgenerator problemgenerator.c
 
 clean:
 	$(MAKE) -C ../../src/ clean
