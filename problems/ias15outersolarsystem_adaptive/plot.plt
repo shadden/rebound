@@ -5,12 +5,16 @@ set xlabel "time to complete run [s]"
 set ylabel "relative energy after 10000 yrs"
 set logscale xy
 set autoscale fix
-set key below
 set yrange [:1]
-set multiplot layout 2,2
-
+set multiplot layout 3,2
+set bmargin 0
+unset key
 set st d p
+
 do for [i=0:3]{
+	if (i==3) {
+		 set key left; 
+	}
 
 	set title "Testcase ".i
 	plot \
@@ -21,5 +25,4 @@ do for [i=0:3]{
 	"testcase_".i."/energy_radau.txt" t "MERCURY RADAU",  \
 	"testcase_".i."/energy_hybrid.txt" t "MERCURY HYBRID",  \
 	"testcase_".i."/energy_mvs.txt" t "MERCURY MVS",  \
-
 }
