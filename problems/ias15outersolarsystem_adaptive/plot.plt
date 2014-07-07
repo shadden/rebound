@@ -5,14 +5,14 @@ set xlabel "time to complete run [s]"
 set ylabel "relative energy after 10000 orbits"
 set logscale xy
 set autoscale fix
-set yrange [:1]
-set xrange [0.1:10]
+set yrange [1e-14:1]
+set xrange [:10]
 set multiplot layout 3,2
 unset key
 set st d p
 
-do for [i=0:4]{
-	if (i==3) {
+do for [i=0:5]{
+	if (i==2) {
 		set key bottom left  box; 
 	}else{
 		unset key;

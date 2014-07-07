@@ -17,7 +17,7 @@ struct particle* particles;
 
 void readin(char* filename){
 	// find central mass 
-	system("grep mass ../param.in | awk '{print $5}' >> tmp.txt");
+	system("grep mass ../param.in | awk '{print $5}' > tmp.txt");
 	FILE* parf =  fopen("tmp.txt", "r");	
 	fscanf(parf,"%lf",&(particles[0].m));
 	fclose(parf);

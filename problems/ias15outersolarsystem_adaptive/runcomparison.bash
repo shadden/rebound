@@ -7,8 +7,8 @@ function runepsilon {
 	max=-5
 	for i in $(seq 0 $points)
 	do 
-		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
-		e=$(echo "scale=10; e($exp*l(10))"  | bc -l )
+		exp=$(echo "scale=16; ($max-($min))/$points*$i+($min) " |bc)
+		e=$(echo "scale=16; e($exp*l(10))"  | bc -l )
 		rm -f *.tmp
 		rm -f *.dmp
 		rm -f *.out
@@ -19,6 +19,7 @@ function runepsilon {
 		energy="$(../mercury_read/mercury_energy big.in big.dmp)"
 		if [[ $utime == *Alarm* ]]; then
 			echo "Did not finish in time."
+			echo "10. 1. $e" >> ../energy_$1.txt 
 		else
 			echo "$utime $energy $e" >> ../energy_$1.txt 
 			echo "$utime $energy $e"  
@@ -30,13 +31,13 @@ function runepsilon {
 function rundt {
 	echo "Running mercury dt $1"
 	rm -f ../energy_$1.txt
-	points=7
+	points=20
 	min=0
 	max=4
 	for i in $(seq 0 $points)
 	do 
-		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
-		e=$(echo "scale=10; e($exp*l(10))"  | bc -l )
+		exp=$(echo "scale=16; ($max-($min))/$points*$i+($min) " |bc)
+		e=$(echo "scale=16; e($exp*l(10))"  | bc -l )
 		rm -f *.tmp
 		rm -f *.dmp
 		rm -f *.out
@@ -47,6 +48,7 @@ function rundt {
 		energy="$(../mercury_read/mercury_energy big.in big.dmp)"
 		if [[ $utime == *Alarm* ]]; then
 			echo "Did not finish in time."
+			echo "10. 1. $e" >> ../energy_$1.txt 
 		else
 			echo "$utime $energy $e" >> ../energy_$1.txt 
 			echo "$utime $energy $e"  
@@ -63,8 +65,8 @@ function runepsilonnbody {
 	max=$3
 	for i in $(seq 0 $points)
 	do 
-		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
-		e=$(echo "scale=10; e($exp*l(10))"  | bc -l )
+		exp=$(echo "scale=16; ($max-($min))/$points*$i+($min) " |bc)
+		e=$(echo "scale=16; e($exp*l(10))"  | bc -l )
 		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$e 2>&1 ) 2>&1 1>/dev/null )"
 		if [ ! -f energy.txt ]; then
 			energy="-1"
@@ -73,6 +75,7 @@ function runepsilonnbody {
 		fi
 		if [[ $utime == *Alarm* ]]; then
 			echo "Did not finish in time."
+			echo "10. 1. $e" >> energy_$1.txt 
 		else
 			echo "$utime $energy $e" >> energy_$1.txt 
 			echo "$utime $energy $e"  
@@ -86,7 +89,7 @@ make problemgenerator
 
 
 
-for t in $(seq 0 4)
+for t in $(seq 5 5)
 do
 	echo "Running test case $t"
 
