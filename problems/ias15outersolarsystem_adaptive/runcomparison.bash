@@ -85,6 +85,25 @@ function runepsilonnbody {
 
 	done
 }
+function runepsilonnbodycanonical {
+	echo "Running REBOUND epsilon canonical $1"
+	rm -f energy_$1_canonical.txt
+	canonical="0.01"
+	utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$canonical 2>&1 ) 2>&1 1>/dev/null )"
+	if [ ! -f energy.txt ]; then
+		energy="-1"
+	else
+		energy="$(cat energy.txt)"
+	fi
+	if [[ $utime == *Alarm* ]]; then
+		echo "Did not finish in time."
+	else
+		echo "$utime $energy $canonical" >> energy_$1_canonical.txt 
+		echo "$utime $energy $canonical"  
+	fi
+	rm -f energy.txt
+
+}
 
 function rundtnbody {
 	echo "Running REBOUND dt $1"
@@ -118,18 +137,20 @@ make problemgenerator
 
 
 
-for t in $(seq 2 5)
+for t in $(seq 3 3)
 do
+	echo "###################################"
 	echo "Running test case $t"
 
 	./problemgenerator --testcase=$t
 
+	make -s ias15
+	runepsilonnbody ias15 -3 0
+	runepsilonnbodycanonical ias15 
+	
 	make -s ra15
 	runepsilonnbody ra15 -10 -8
 
-	make -s ias15
-	runepsilonnbody ias15 -3 0
-	
 	make -s wh
 	rundtnbody wh 0 4
 

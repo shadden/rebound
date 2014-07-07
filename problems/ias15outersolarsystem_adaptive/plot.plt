@@ -25,5 +25,6 @@ do for [i=0:5]{
 	"testcase_".i."/energy_wh.txt" t "      REBOUND WH",  \
 	"testcase_".i."/energy_bs2.txt" t "MERCURY BS2",  \
 	"testcase_".i."/energy_radau.txt" t "MERCURY RADAU",  \
-	"testcase_".i."/energy_mvs.txt" t "      MERCURY MVS",  \
+	"testcase_".i."/energy_mvs.txt" t "      MERCURY MVS" lt 7,  \
+	"testcase_".i."/energy_ias15_canonical.txt" notit ps 5 lt 6, \
 }
