@@ -66,7 +66,11 @@ function runepsilonnbody {
 		exp=$(echo "scale=10; ($max-($min))/$points*$i+($min) " |bc)
 		e=$(echo "scale=10; e($exp*l(10))"  | bc -l )
 		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$e 2>&1 ) 2>&1 1>/dev/null )"
-		energy="$(cat energy.txt)"
+		if [ ! -f energy.txt ]; then
+			energy="-1"
+		else
+			energy="$(cat energy.txt)"
+		fi
 		if [[ $utime == *Alarm* ]]; then
 			echo "Did not finish in time."
 		else
