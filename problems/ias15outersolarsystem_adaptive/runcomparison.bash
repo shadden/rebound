@@ -85,6 +85,34 @@ function runepsilonnbody {
 	done
 }
 
+function rundtnbody {
+	echo "Running REBOUND dt $1"
+	rm -f energy_$1.txt
+	points=20
+	min=$2
+	max=$3
+	for i in $(seq 0 $points)
+	do 
+		exp=$(echo "scale=16; ($max-($min))/$points*$i+($min) " |bc)
+		e=$(echo "scale=16; e($exp*l(10))"  | bc -l )
+		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --dt=$e 2>&1 ) 2>&1 1>/dev/null )"
+		if [ ! -f energy.txt ]; then
+			energy="-1"
+		else
+			energy="$(cat energy.txt)"
+		fi
+		if [[ $utime == *Alarm* ]]; then
+			echo "Did not finish in time."
+			echo "10. 1. $e" >> energy_$1.txt 
+		else
+			echo "$utime $energy $e" >> energy_$1.txt 
+			echo "$utime $energy $e"  
+		fi
+		rm -f energy.txt
+
+	done
+}
+
 make problemgenerator
 
 
@@ -95,11 +123,14 @@ do
 
 	./problemgenerator --testcase=$t
 
-	make ra15
+	make -s ra15
 	runepsilonnbody ra15 -10 -8
 
-	make ias15
+	make -s ias15
 	runepsilonnbody ias15 -3 0
+	
+	make -s wh
+	rundtnbody wh 0 4
 
 	pushd mercury
 	rm -f *.tmp
