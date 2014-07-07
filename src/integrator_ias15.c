@@ -186,7 +186,7 @@ int integrator_ias15_step() {
 
 	double predictor_corrector_error = 1;
 	int iterations = 0;
-	while(predictor_corrector_error>1e-12){						// Predictor corrector loop
+	while(predictor_corrector_error>1e-10){						// Predictor corrector loop
 		if (iterations>=integrator_iterations_max){
 			integrator_iterations_max_exceeded++;
 			const int integrator_iterations_warning = 1;

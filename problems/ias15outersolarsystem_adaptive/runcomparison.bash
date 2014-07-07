@@ -89,7 +89,7 @@ make problemgenerator
 
 
 
-for t in $(seq 5 5)
+for t in $(seq 0 5)
 do
 	echo "Running test case $t"
 
@@ -106,10 +106,10 @@ do
 	rm -f *.dmp
 	rm -f *.out
 	rm -f output.txt
-	runepsilon bs 
+	#runepsilon bs 
 	runepsilon bs2
 	runepsilon radau 
-	runepsilon hybrid 
+	#runepsilon hybrid 
 	rundt mvs 
 	popd
 
