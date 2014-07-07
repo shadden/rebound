@@ -11,6 +11,7 @@ int N = 0;
 struct particle* particles;
 const double G	= 0.01720209895*0.01720209895;
 double tmax;
+double timescale = 1;
 
 int input_get_int(int argc, char** argv, const char* argument, int _default);
 void output_binary(char* filename);
@@ -126,6 +127,7 @@ int main(int argc, char* argv[]){
 			perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
 			particles[N++] = perturber;
 			tmax	= 1e4*365.*sqrt(semia*semia*semia/star.m);
+			timescale  = sqrt(semia*semia*semia/star.m);
 			break;
 		}
 		case 3: // Kozai  80 size = 0.01
@@ -162,6 +164,7 @@ int main(int argc, char* argv[]){
 			perturber.vz = sin(inc_perturber/180.*M_PI)*sqrt(G*(star.m+perturber.m)/perturber.x); 
 			particles[N++] = perturber;
 			tmax	= 1e4*365.*sqrt(semia*semia*semia/star.m);
+			timescale  = sqrt(semia*semia*semia/star.m);
 			break;
 		}
 		case 4: // outer solar system
@@ -265,6 +268,7 @@ int main(int argc, char* argv[]){
 			particles[0].x = 0;	particles[0].y = 0;	particles[0].z = 0;
 			particles[0].vx= 0;	particles[0].vy= 0;	particles[0].vz= 0;
 			tmax		= 365e4*sqrt(scale*scale*scale);		// 10000 yr
+			timescale  = sqrt(scale*scale*scale);
 			break;
 		}
 		default:
@@ -293,6 +297,11 @@ int main(int argc, char* argv[]){
 		fprintf(of," 0. 0. 0.\n");
 	}
 	fclose(of);
+	
+	of = fopen("timescale.txt","w"); 
+	fprintf(of,"%.16f\n",timescale);
+	fclose(of);
+
 	
 	of = fopen("param.in","w"); 
 	fprintf(of,")O+_06 Integration parameters  (WARNING: Do not delete this line!!)\n");
@@ -379,6 +388,7 @@ void output_binary(char* filename){
 	FILE* of = fopen(filename,"wb"); 
 	fwrite(&N,sizeof(int),1,of);
 	fwrite(&tmax,sizeof(double),1,of);
+	fwrite(&timescale,sizeof(double),1,of);
 	for (int i=0;i<N;i++){
 		struct particle p = particles[i];
 		fwrite(&(p),sizeof(struct particle),1,of);

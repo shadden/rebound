@@ -6,7 +6,7 @@ set ylabel "relative energy after 10000 orbits"
 set logscale xy
 set autoscale fix
 set yrange [1e-14:1]
-set xrange [:10]
+set xrange [0.05:10]
 set multiplot layout 3,2
 unset key
 set st d p

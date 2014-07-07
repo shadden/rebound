@@ -36,8 +36,9 @@ function rundt {
 	max=4
 	for i in $(seq 0 $points)
 	do 
+		timescale=$(cat ../timescale.txt)
 		exp=$(echo "scale=16; ($max-($min))/$points*$i+($min) " |bc)
-		e=$(echo "scale=16; e($exp*l(10))"  | bc -l )
+		e=$(echo "scale=16; e($exp*l(10))*$timescale"  | bc -l )
 		rm -f *.tmp
 		rm -f *.dmp
 		rm -f *.out
@@ -117,7 +118,7 @@ make problemgenerator
 
 
 
-for t in $(seq 0 5)
+for t in $(seq 2 5)
 do
 	echo "Running test case $t"
 

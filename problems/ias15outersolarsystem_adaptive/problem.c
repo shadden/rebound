@@ -48,6 +48,7 @@ double energy();
 double energy_init;
 void input_binary_special(char* filename);
 int init_N;
+double timescale = 1;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
@@ -64,6 +65,7 @@ void problem_init(int argc, char* argv[]){
 	init_boxwidth(150); 			// Init box with width 200 astronomical units
 
 	input_binary_special("particles.bin");
+	dt *= timescale;
 	init_N = N;
 
 #ifndef INTEGRATOR_WH
@@ -161,6 +163,7 @@ void input_binary_special(char* filename){
 	int _N;
 	objects += fread(&_N,sizeof(int),1,inf);
 	objects += fread(&tmax,sizeof(double),1,inf);
+	objects += fread(&timescale,sizeof(double),1,inf);
 	for (int i=0;i<_N;i++){
 		struct particle p;
 		objects += fread(&p,sizeof(struct particle),1,inf);
