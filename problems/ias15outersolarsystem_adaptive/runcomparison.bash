@@ -146,7 +146,7 @@ make problemgenerator
 rm -rf energy_*.txt
 
 
-for t in $(seq 0 5)
+for t in $(seq 6 7)
 do
 	echo "###################################"
 	echo "Running test case $t"
@@ -154,30 +154,31 @@ do
 	./problemgenerator --testcase=$t
 
 	make -s ias15
-#	runepsilonnbody ias15 -3 0
+	runepsilonnbody ias15 -3 0
+	runnbodycanonical ias15 0
 	runnbodycanonical ias15 1
-	
-#	make -s ra15
-#	runepsilonnbody ra15 -10 -8
+      
+	make -s ra15
+	runepsilonnbody ra15 -10 -8
 
 	make -s wh
-#	rundtnbody wh 0 4
+	rundtnbody wh 0 4
 	runnbodycanonical wh 1
 
-#	pushd mercury
-#	rm -f *.tmp
-#	rm -f *.dmp
-#	rm -f *.out
-#	rm -f output.txt
-#	#runepsilon bs 
-#	runepsilon bs2
-#	runepsilon radau 
-#	#runepsilon hybrid 
-#	rundt mvs 
-#	popd
-#
-#	rm -rf testcase_$t
-#	mkdir testcase_$t
+	pushd mercury
+	rm -f *.tmp
+	rm -f *.dmp
+	rm -f *.out
+	rm -f output.txt
+	#runepsilon bs 
+	runepsilon bs2
+	runepsilon radau 
+	#runepsilon hybrid 
+	rundt mvs 
+	popd
+
+	rm -rf testcase_$t
+	mkdir testcase_$t
 	mv energy*.txt testcase_$t/
 
 done

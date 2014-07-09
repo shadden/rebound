@@ -139,7 +139,7 @@ double energy(){
 	return mpf_get_d(energy_kinetic);
 }
 void problem_output(){
-	if (output_energy){
+	if (outputenergy){
 		if(output_check(tmax/10000.)){
 			FILE* of = fopen("energy_timeseries.txt","a+"); 
 			double rel_energy = fabs((energy()-energy_init)/energy_init);

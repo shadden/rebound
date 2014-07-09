@@ -1,11 +1,11 @@
 #!/bin/gnuplot
 set output "plot.pdf" 
-set terminal pdf color enhanced size 6in,5in
+set terminal pdf color enhanced size 6in,7in
 set logscale xyx2y2
 set autoscale fix
-set yrange [1e-14:0.9]
+set yrange [1e-16:0.9]
 set xrange [0.07:12]
-set multiplot layout 3,2
+set multiplot layout 4,2
 unset key
 set ytics 1000
 set st d p
@@ -13,10 +13,10 @@ set st d p
 bottommargin = 0.08
 keymargin = 0.1
 topmargin = 0.05
-ny = 3
+ny = 4
 px = 0
 
-do for [i=0:5]{
+do for [i=0:7]{
 	if (i==2) {
 		set key at screen 0.5,0.05 center horizontal 
 	}else{

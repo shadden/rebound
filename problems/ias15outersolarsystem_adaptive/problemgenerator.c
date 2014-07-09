@@ -294,7 +294,7 @@ int main(int argc, char* argv[]){
 			planet.vz = 0;
 			particles[N++] = planet;
 			
-			tmax	= 2.*365.*sqrt(semia*semia*semia/star.m);
+			tmax	= 1e3*365.*sqrt(semia*semia*semia/star.m);
 			break;
 		}
 		case 7: // Eccentric orbit 0.99999
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]){
 			planet.vz = 0;
 			particles[N++] = planet;
 			
-			tmax	= 2.*365.*sqrt(semia*semia*semia/star.m);
+			tmax	= 1e3*365.*sqrt(semia*semia*semia/star.m);
 			break;
 		}
 		default:
