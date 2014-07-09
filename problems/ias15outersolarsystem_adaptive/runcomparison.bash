@@ -85,11 +85,16 @@ function runepsilonnbody {
 
 	done
 }
-function runepsilonnbodycanonical {
-	echo "Running REBOUND epsilon canonical $1"
+function runnbodycanonical {
+	echo "Running REBOUND canonical $1"
 	rm -f energy_$1_canonical.txt
 	canonical="0.01"
-	utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$canonical 2>&1 ) 2>&1 1>/dev/null )"
+	dt="10."
+	if [ $2 -eq 1 ]; then 
+		utime="$( TIMEFORMAT='%R';time ( ./nbody --integrator_epsilon=$canonical --dt=$dt  --outputenergy=$2 2>&1 ) 2>&1 1>/dev/null )"
+	else
+		utime="$( TIMEFORMAT='%R';time ( doalarm 10 ./nbody --integrator_epsilon=$canonical --dt=$dt  --outputenergy=$2 2>&1 ) 2>&1 1>/dev/null )"
+	fi
 	if [ ! -f energy.txt ]; then
 		energy="-1"
 	else
@@ -98,8 +103,12 @@ function runepsilonnbodycanonical {
 	if [[ $utime == *Alarm* ]]; then
 		echo "Did not finish in time."
 	else
-		echo "$utime $energy $canonical" >> energy_$1_canonical.txt 
-		echo "$utime $energy $canonical"  
+		if [ $2 -eq 1 ]; then 
+			mv energy_timeseries.txt energy_timeseries_$1.txt
+		else
+			echo "$utime $energy $canonical" >> energy_$1_canonical.txt 
+			echo "$utime $energy $canonical"  
+		fi
 	fi
 	rm -f energy.txt
 
@@ -134,10 +143,10 @@ function rundtnbody {
 }
 
 make problemgenerator
+rm -rf energy_*.txt
 
 
-
-for t in $(seq 3 3)
+for t in $(seq 0 5)
 do
 	echo "###################################"
 	echo "Running test case $t"
@@ -145,29 +154,30 @@ do
 	./problemgenerator --testcase=$t
 
 	make -s ias15
-	runepsilonnbody ias15 -3 0
-	runepsilonnbodycanonical ias15 
+#	runepsilonnbody ias15 -3 0
+	runnbodycanonical ias15 1
 	
-	make -s ra15
-	runepsilonnbody ra15 -10 -8
+#	make -s ra15
+#	runepsilonnbody ra15 -10 -8
 
 	make -s wh
-	rundtnbody wh 0 4
+#	rundtnbody wh 0 4
+	runnbodycanonical wh 1
 
-	pushd mercury
-	rm -f *.tmp
-	rm -f *.dmp
-	rm -f *.out
-	rm -f output.txt
-	#runepsilon bs 
-	runepsilon bs2
-	runepsilon radau 
-	#runepsilon hybrid 
-	rundt mvs 
-	popd
-
-	rm -rf testcase_$t
-	mkdir testcase_$t
+#	pushd mercury
+#	rm -f *.tmp
+#	rm -f *.dmp
+#	rm -f *.out
+#	rm -f output.txt
+#	#runepsilon bs 
+#	runepsilon bs2
+#	runepsilon radau 
+#	#runepsilon hybrid 
+#	rundt mvs 
+#	popd
+#
+#	rm -rf testcase_$t
+#	mkdir testcase_$t
 	mv energy*.txt testcase_$t/
 
 done

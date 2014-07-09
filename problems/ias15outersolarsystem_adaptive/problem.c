@@ -49,10 +49,12 @@ double energy_init;
 void input_binary_special(char* filename);
 int init_N;
 double timescale = 1;
+int outputenergy;
 
 void problem_init(int argc, char* argv[]){
 	// Setup constants
 	dt 		= input_get_double(argc,argv,"dt",1.);			// days
+	outputenergy	= input_get_int(argc,argv,"outputenergy",0);
 	const double k 	= 0.01720209895;	// Gaussian constant 
 	G		= k*k;
 
@@ -137,14 +139,14 @@ double energy(){
 	return mpf_get_d(energy_kinetic);
 }
 void problem_output(){
-	/*
-	if(output_check(3.)){
-		struct orbit o = tools_p2orbit(particles[1], particles[0]);
-		FILE* of = fopen("orbit.txt","a+"); 
-		fprintf(of,"%e\t%e\t%e\n",t,o.a,o.e);
-		fclose(of);
+	if (output_energy){
+		if(output_check(tmax/10000.)){
+			FILE* of = fopen("energy_timeseries.txt","a+"); 
+			double rel_energy = fabs((energy()-energy_init)/energy_init);
+			fprintf(of,"%e\t%e\n",t,rel_energy);
+			fclose(of);
+		}
 	}
-	*/
 }
 
 void problem_finish(){

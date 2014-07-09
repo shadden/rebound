@@ -3,10 +3,11 @@ set output "plot.pdf"
 set terminal pdf color enhanced size 6in,5in
 set logscale xyx2y2
 set autoscale fix
-set yrange [1e-14:1]
-set xrange [0.09:10]
+set yrange [1e-14:0.9]
+set xrange [0.07:12]
 set multiplot layout 3,2
 unset key
+set ytics 1000
 set st d p
 
 bottommargin = 0.08
@@ -27,8 +28,9 @@ do for [i=0:5]{
 		set rmargin 0
 		set lmargin 12
 		set format y "%g" 
+		set format y "10^{%S}"
 		if (i/2==(ny-1)/2){
-			set ylabel "relative energy"
+			set ylabel "relative energy error"
 		}else{
 			unset ylabel
 		}
@@ -62,7 +64,7 @@ do for [i=0:5]{
 	}
 
 	titfile=system("sed '".(i+1)."q;d' titles.txt");
-	set label 1 titfile at graph 0.99,0.1 right
+	set label 1 titfile at graph 0.01,0.1 left
 
 
 	plot \
@@ -71,7 +73,7 @@ do for [i=0:5]{
 	"testcase_".i."/energy_ra15.txt" t "REBOUND RA15", \
 	"testcase_".i."/energy_wh.txt" t "      REBOUND WH",  \
 	"testcase_".i."/energy_bs2.txt" t "MERCURY BS2",  \
-	"testcase_".i."/energy_radau.txt" t "MERCURY RADAU",  \
+	"testcase_".i."/energy_radau.txt" t "MERCURY RADAU" lt 2,  \
 	"testcase_".i."/energy_mvs.txt" t "      MERCURY MVS" lt 7,  \
 	"testcase_".i."/energy_ias15_canonical.txt" notit ps 4 lt 6, \
 }

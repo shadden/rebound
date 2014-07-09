@@ -271,6 +271,58 @@ int main(int argc, char* argv[]){
 			timescale  = sqrt(scale*scale*scale);
 			break;
 		}
+		case 6: // Eccentric orbit 0.99
+		{
+			double semia = 1.0;
+
+			struct particle star; 
+			star.m  = 1;
+			star.x  = 0; star.y  = 0; star.z  = 0; 
+			star.vx = 0; star.vy = 0; star.vz = 0;
+			particles[N++] = star;
+
+			
+			// The planet 
+			struct particle planet; 
+			double e = 0.99;
+			planet.m  = 0.01*star.m;
+			planet.x  = semia*(1.+e); 
+			planet.y  = 0; 
+			planet.z  = 0; 
+			planet.vx = 0; 
+			planet.vy = sqrt((1.-e)/(1.+e)*G*star.m/semia); 
+			planet.vz = 0;
+			particles[N++] = planet;
+			
+			tmax	= 2.*365.*sqrt(semia*semia*semia/star.m);
+			break;
+		}
+		case 7: // Eccentric orbit 0.99999
+		{
+			double semia = 1.0;
+
+			struct particle star; 
+			star.m  = 1;
+			star.x  = 0; star.y  = 0; star.z  = 0; 
+			star.vx = 0; star.vy = 0; star.vz = 0;
+			particles[N++] = star;
+
+			
+			// The planet 
+			struct particle planet; 
+			double e = 0.99999;
+			planet.m  = 0.01*star.m;
+			planet.x  = semia*(1.+e); 
+			planet.y  = 0; 
+			planet.z  = 0; 
+			planet.vx = 0; 
+			planet.vy = sqrt((1.-e)/(1.+e)*G*star.m/semia); 
+			planet.vz = 0;
+			particles[N++] = planet;
+			
+			tmax	= 2.*365.*sqrt(semia*semia*semia/star.m);
+			break;
+		}
 		default:
 			printf("test case not found\n");
 			exit(-1);
