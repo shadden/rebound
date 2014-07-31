@@ -1,0 +1,754 @@
+<h1>REBOUND - An open-source multi-purpose N-body code for collisional dynamics</h1>
+
+<h2>Contributors</h2>
+
+<ul>
+<li>Hanno Rein, Institute for Advanced Study (IAS), Princeton, <a href="&#109;&#97;&#x69;&#x6C;t&#111;:&#104;&#97;&#110;&#x6E;&#x6F;&#64;&#104;&#x61;&#x6E;&#110;&#x6F;&#45;&#x72;&#101;&#105;&#110;&#46;&#x64;&#x65;">&#104;&#97;&#110;&#x6E;&#x6F;&#64;&#104;&#x61;&#x6E;&#110;&#x6F;&#45;&#x72;&#101;&#105;&#110;&#46;&#x64;&#x65;</a></li>
+<li>Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <a href="&#x6D;&#x61;&#x69;&#x6C;&#x74;o:&#x6C;&#x69;&#117;&#x73;&#x68;&#x61;&#110;&#103;&#102;e&#105;&#64;&#112;&#107;&#117;&#x2E;&#x65;&#100;&#x75;&#46;&#x63;&#110;">&#x6C;&#x69;&#117;&#x73;&#x68;&#x61;&#110;&#103;&#102;e&#105;&#64;&#112;&#107;&#117;&#x2E;&#x65;&#100;&#x75;&#46;&#x63;&#110;</a></li>
+<li>David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <a href="&#x6D;&#97;&#105;&#108;&#116;&#x6F;:&#x64;&#97;v&#101;&#64;&#x69;&#x61;&#x73;&#46;&#101;&#x64;&#117;">&#x64;&#97;v&#101;&#64;&#x69;&#x61;&#x73;&#46;&#101;&#x64;&#117;</a></li>
+<li>Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <a href="&#109;&#97;&#x69;&#x6C;&#116;&#111;:&#x61;&#x6B;&#105;&#x68;&#x69;&#107;&#111;.&#102;&#x75;&#x6A;&#x69;&#x69;&#64;&#x6E;&#x61;&#x6F;.&#x61;&#99;&#x2E;j&#112;">&#x61;&#x6B;&#105;&#x68;&#x69;&#107;&#111;.&#102;&#x75;&#x6A;&#x69;&#x69;&#64;&#x6E;&#x61;&#x6F;.&#x61;&#99;&#x2E;j&#112;</a></li>
+</ul>
+
+<h2>Papers</h2>
+
+<p>There are two papers describing the functionality of REBOUND. </p>
+
+<p>The first one, Rein &amp; Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. </p>
+
+<p>The second paper, Rein &amp; Spiegel (in preparation) describes versatile high order integrator IAS15 which is now part of REBOUND. </p>
+
+<h2>Screenshot</h2>
+
+<p><img src="https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png" alt="Tree structure in REBOUND" title=""> </p>
+
+<p>You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. </p>
+
+<h2>Available modules</h2>
+
+<p>REBOUND is extremely modular. You have the choice between different gravity, collision, boundary and integration modules. It is also possible to implement completely new modules with minimal effort. Modules are chosen by setting symbolic links. Thus, there is no need to run a configure script. For example, there is one link <code>gravity.c</code> that points to one of the gravity modules <code>gravity_*.c</code>. The symbolic links are set in the problem makefile (see below).</p>
+
+<p>This setup allows you to work on multiple projects at the same time using different modules. When switching to another problem, nothing has to be set-up and the problem can by compiled by simply typing <code>make</code> in the corresponding directory (see below).</p>
+
+<h3>Gravity</h3>
+
+<table>
+  <tr><th>Module name</th>
+     <th>Description</th></tr>
+  <tr><td><pre>gravity_none.c       </pre></td>
+     <td>No self-gravity</td></tr>
+  <tr><td><pre>gravity_direct.c     </pre></td>
+     <td>Direct summation, O(N^2)</td></tr>
+  <tr><td><pre>gravity_opencl.c     </pre></td>
+     <td>Direct summation, O(N^2), but accelerated using the OpenCL framework. </td></tr>
+  <tr><td><pre>gravity_tree.c       </pre></td>
+     <td>Oct tree, Barnes & Hut 1986, O(N log(N))</td></tr>
+  <tr><td><pre>gravity_grape.c      </pre></td>
+     <td>GRAPE, hardware accelerated direct summation, Sugimoto et al. 1990 </td></tr>
+  <tr><td><pre>gravity_fft.c        </pre></td>
+     <td>Two dimensional gravity solver using FFTW, works in a periodic box and the shearing sheet. (Not well tested yet.)</td></tr>
+</table>
+
+<h3>Collision detection</h3>
+
+<table>
+  <tr><th>Module name</th>
+     <th>Description</th></tr>
+  <tr><td><pre>collisions_none.c    </pre></td>
+     <td>No collision detection</td></tr>
+  <tr><td><pre>collisions_direct.c  </pre></td>
+     <td>Direct nearest neighbor search, O(N^2)</td></tr>
+  <tr><td><pre>collisions_tree.c    </pre></td>
+     <td>Oct tree, O(N log(N))</td></tr>
+  <tr><td><pre>collisions_sweep.c   </pre></td>
+     <td>Plane sweep algorithm, ideal for low dimensional problems, O(N) or O(N^1.5) depending on geometry</td></tr>
+  <tr><td><pre>collisions_sweepphi.c   </pre></td>
+     <td>Plane sweep algorithm along the azimuthal angle, ideal for narrow rings in global simulations, O(N) or O(N^1.5) depending on geometry</td></tr>
+</table>
+
+<h3>Integrators</h3>
+
+<table>
+  <tr><th>Module name</th>
+     <th>Description</th></tr>
+  <tr><td><pre>integrator_euler.c   </pre></td>
+     <td>Euler scheme, first order</td></tr>
+  <tr><td><pre>integrator_leapfrog.c</pre></td>
+     <td>Leap frog, second order, symplectic</td></tr>
+  <tr><td><pre>integrator_wh.c      </pre></td>
+     <td>Wisdom-Holman Mapping, mixed variable symplectic integrator for the Kepler potential, second order, Wisdom & Holman 1991, Kinoshita et al 1991</td></tr>
+  <tr><td><pre>integrator_ias15.c </pre></td>
+     <td>IAS15 stands for Integrator with Adaptive Step-size control, 15th order. It is a vey high order, non-symplectic integrator which can handle arbitrary (velocity dependent) forces and is in most cases accurate down to machine precission. Rein & Spiegel 2014, Everhart 1985</td></tr>
+  <tr><td><pre>integrator_sei.c     </pre></td>
+     <td>Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011</td></tr>
+</table>
+
+<h3>Boundaries</h3>
+
+<table>
+  <tr><th>Module name</th>
+     <th>Description</th></tr>
+  <tr><td><pre>boundaries_open.c    </pre></td>
+     <td>Particles are removed from the simulation if they leaves the box.</td></tr>
+  <tr><td><pre>boundaries_periodic.c</pre></td>
+     <td>Periodic boundary conditions. Particles are reinserted on the other side if they cross the box boundaries. You can use an arbitrary number of ghost-boxes with this module.</td></tr>
+  <tr><td><pre>boundaries_shear.c   </pre></td>
+     <td>Shear periodic boundary conditions. Similar to periodic boundary conditions, but ghost-boxes are moving with constant speed, set by the shear.</td></tr>
+</table>
+
+<h2>Other features worth mentioning</h2>
+
+<ul>
+<li>Real-time, 3D OpenGL visualization.</li>
+<li>The code is written entirely in C. It conforms to the ISO standard C99.</li>
+<li>Parallelized with OpenMP (for shared memory systems).</li>
+<li>Parallelized with MPI using an essential tree for gravity and collisions (for distributed memory systems).</li>
+<li>No libraries are needed. The use of OpenGL/GLUT/libpng for visualization is optional. </li>
+<li>The code is fully open-source and can be downloaded freely from http://github.com/hannorein/rebound.</li>
+<li>No configuration is needed to run any of the example problems. Just type <code>make &amp;&amp; ./nbody</code> in the problem directory to run them.</li>
+<li>Standard ASCII or binary output routines. </li>
+<li>Different modules are easily interchangeable by one line in the Makefile.</li>
+</ul>
+
+<h2>How to download, compile and run REBOUND</h2>
+
+<h3>For the impatient</h3>
+
+<p>If you are using a Mac, make sure you have a compiler suite installed. Open a terminal and type <code>make</code>. If it is not installed, go to the AppStore and download Xcode (it is free). Once installed, open Xcode, go to Settings, then Downloads and install the Command Line Tools. </p>
+
+<p>Then, simply copy and paste this line to your terminal and press enter</p>
+
+<pre><code>git clone http://github.com/hannorein/rebound &amp;&amp; cd rebound/examples/shearing_sheet &amp;&amp; make &amp;&amp; ./nbody
+</code></pre>
+
+<p>or if you do not have git installed</p>
+
+<pre><code>wget --no-check-certificate https://github.com/hannorein/rebound/tarball/master -O- | tar xvz &amp;&amp; cd hannorein-rebound-*/examples/shearing_sheet/ &amp;&amp; make &amp;&amp; ./nbody
+</code></pre>
+
+<h3>For the patient</h3>
+
+<p>REBOUND is very easy to install and use. To get started, download the latest version of the code from github. If you are familiar with <code>git</code>, you can clone the project and keep up-to-date with the latest developments. Otherwise, you can also simply download a snapshot of the repository as a tar or zip file at http://github.com/hannorein/rebound. There is a download bottom at the top right. </p>
+
+<p>In the main directory, you find a sub-directory called <code>src</code> which contains the bulk parts of the  source code and a directory called <code>examples</code> with various example problems. To compile one of the example, you have to go to that directory, for example:</p>
+
+<pre><code>cd examples/shearing_sheet/
+</code></pre>
+
+<p>Then, type</p>
+
+<pre><code>make
+</code></pre>
+
+<p>This will do the following things    </p>
+
+<ul>
+<li>It sets various environment variables. These determine settings like the compiler optimization flags and which libraries are included (see below). </li>
+<li>It creates symbolic links to the active modules. This allows you to choose from different gravity solvers, boundary conditions, integrators and collision solvers. For example, to change the gravity solver from using a tree to direct summation you could change <code>gravity_tree.c</code> to <code>gravity_direct.c</code>. </li>
+<li>It creates a symbolic link to the current problem file. Each problem file contains the initial conditions and the output routines for the current problem. You do not need to change any file in <code>src/</code> to create a new problem unless you want to do something very special. This keeps the initial conditions and the code itself cleanly separated.</li>
+<li>It compiles the code and copies the binary into the current directory.</li>
+</ul>
+
+<p>If something goes wrong, it is most likely the visualization module. You can turn it off by deleting the line which contains <code>OPENGL</code> in the makefile. Of course, you will not see much unless you put in some extra work to visualize the results.</p>
+
+<p>You can also create a documentation based on the current choice of modules by typing <code>make doc</code>. However, this requires the documentation generator <code>doxygen</code> to be installed. The documentation will be generated in the directory <code>doc/html/</code>.</p>
+
+<p>To finally run the code, simply type</p>
+
+<pre><code>./nbody
+</code></pre>
+
+<p>A window should open and you will see a simulation running in real time. The problem in the directory <code>examples/shearing_sheet/</code> simulates the rings of Saturn and uses a local shearing sheet approximation. Have a look at the other examples as well and you will quickly get an idea of what REBOUND can do. </p>
+
+<p>If you want to create your own problem, just copy one of the example directories or the template in the <code>problems</code> directory. Then simply modify <code>problem.c</code> and <code>Makefile</code> accordingly.  </p>
+
+<h3>How to install GLUT</h3>
+
+<p>The OpenGL Utility Toolkit (GLUT) comes pre-installed as a framework on Mac OSX. If you are working on another operating system, you might have to install GLUT yourself if you see an error message such as <code>error: GL/glut.h: No such file or directory</code>. On Debian and Ubuntu, simply make sure the <code>freeglut3-dev</code> package is installed. If glut is not available in your package manager, go to http://freeglut.sourceforge.net/ download the latest version, configure it with <code>./configure</code> and compile it with <code>make</code>. Finally install the library and header files with <code>make install</code>. </p>
+
+<p>You can also install freeglut in a non-default installation directory if you do not have super-user rights by running the freeglut installation script with the prefix option:</p>
+
+<pre><code>mkdir ${HOME}/local
+./configure --prefix=${HOME}/local
+make all &amp;&amp; make install
+</code></pre>
+
+<p>Then, add the following lines to the REBOUND Makefile</p>
+
+<pre><code>OPT += -I$(HOME)/local/include
+LIB += -L$(HOME)/local/lib
+</code></pre>
+
+<p>Note that you can still compile and run REBOUND even if you do not have GLUT installed. Simple set <code>OPENGL=0</code> in the makefile (see below). </p>
+
+<h3>Environment variables</h3>
+
+<p>The makefile in each problem directory sets various environment variables. These determine the compiler optimization flags, the libraries included and basic code settings. Let us look at one of the examples <code>shearing_sheet</code> in more detail. </p>
+
+<ul>
+<li><code>export PROFILING=1</code>. This enables profiling. You can see how much time is spend in the collision, gravity, integrator and visualization modules. This is useful to get an idea about the computational bottleneck.</li>
+<li><code>export QUADRUPOLE=0</code>. This disables the calculation of quadrupole moments for each cell in the tree. The simulation is faster, but less accurate.</li>
+<li><code>export OPENGL=1</code>. This enables real-time OpenGL visualizations and requires both OpenGL and GLUT libraries to be installed. This should work without any further adjustments on any Mac which has Xcode installed. On Linux both libraries must be installed in <code>/usr/local/</code>. You can change the default search paths for libraries in the file <code>src/Makefile</code>. </li>
+<li><code>export MPI=0</code>. This disables parallelization with MPI.</li>
+<li><code>export OPENMP=1</code>. This enables parallelization with OpenMP. The number of threads can be set with an environment variable at runtime, e.g.: <code>export OMP_NUM_THREADS=8</code>.</li>
+<li><code>export CC=icc</code>. This flag can be used to override the default compiler. The default compilers are <code>gcc</code> for the sequential and <code>mpicc</code> for the parallel version. </li>
+<li><code>export LIB=</code>. Additional search paths for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. </li>
+<li><code>export OPT=-O3</code>. This sets the additional compiler flag <code>-O3</code> and optimizes the code for speed. Additional search paths to header files for external libraries (such as OpenGL, GLUT and LIBPNG) can be set up using this variable. </li>
+</ul>
+
+<p>All of these variables are read by the main makefile in the <code>src/</code> directory. The <code>OPENGL</code> variable, for example, is used to determine if the OpenGL and GLUT libraries should be included. If the variable is <code>1</code> the makefile also sets a pre-compiler macro with <code>-DOPENGL</code>. Note that because OPENGL is incompatible with MPI, when MPI is turned on (set to 1), OPENGL is automatically turned off (set to 0) in the main makefile.</p>
+
+<h3>User-defined functions in the problem.c file</h3>
+
+<p>The problem.c file contains at least four functions. You do not need to implement all of them, a dummy might be enough. </p>
+
+<h4>void problem_init(int argc, char* argv[])</h4>
+
+<p>This routine is where you read command line arguments and set up your initial conditions. REBOUND does not come with a built-in functionality to read configuration files at run-time. You should see this as a feature. In REBOUND, you have one <code>problem.c</code> file for each problem. Thus, everything can be set within this file. There are, of course, situation in which you want to do something like a parameter space survey. In almost all cases, you vary a few parameters but rarely more, say 5. You can easily read these parameters from the command line.</p>
+
+<p>Here is one example that reads in the first argument given to rebound as the box-size and sets a default value when no value is given:</p>
+
+<p><code>c
+if (argc&gt;1){
+    boxsize = atof(argv[1]);
+}else{
+    boxsize = 100;
+}
+</code></p>
+
+<p>If you are still convinced that you need a configuration file, you are welcome to implement it yourself. This function is where you want to do that.    </p>
+
+<h4>void problem<em>additional</em>forces()</h4>
+
+<p>This is a function pointer which is called one or more times per time-step whenever the forces are updated. This is where you can implement all kind of things such as additional forces onto particles. </p>
+
+<p>The following lines of code implement a simple velocity dependent force.  <code>integrator_ias15.c</code> is best suited for this (see <code>examples/dragforce</code>):</p>
+
+<p><code>c
+void velocity_dependent_force(){
+    for (int i=1;i&lt;N;i++){
+        particles[i].ax -= 0.0000001 * particles[i].vx;
+        particles[i].ay -= 0.0000001 * particles[i].vy;
+        particles[i].az -= 0.0000001 * particles[i].vz;
+    }
+}
+</code></p>
+
+<p>Make sure you set the function pointer in the <code>problem_init()</code> routine:</p>
+
+<p><code>c
+    problem_additional_forces = velocity_dependent_force;
+</code></p>
+
+<p>By default, all integrators assume that the forces are velocity dependent. If all forces acting on particles only depend on positions, you can set the following variable (defined in <code>integrator.h</code>) to <code>0</code> to speed up the calculation:</p>
+
+<p><code>c
+    integrator_force_is_velocitydependent = 0;
+</code></p>
+
+<h4>void problem_output()</h4>
+
+<p>This function is called at the beginning of the simulation and at the end of each time-step. You can implement your output routines here. Many basic output functions are already implemented in REBOUND. See <code>output.h</code> for more details. The function <code>output_check(odt)</code> can be used to easily check if an output is needed after a regular interval. For example, the following code snippet outputs some timing statistics to the console every 10 time-steps:</p>
+
+<p><code>c
+if (output_check(10.*dt)){
+    output_timing();
+}
+</code>    </p>
+
+<h4>void problem_finish()</h4>
+
+<p>This function is called at the end of the simulation, when t >= tmax. This is the last chance to output any quantities before the program ends.</p>
+
+<h2>Examples</h2>
+
+<p>The following examples can all be found in the <code>examples</code> directory. 
+Whatever you plan to do with REBOUND, chances are there is already an example available which you can use as a starting point.</p>
+
+<ul>
+<li><p><strong>examples/bouncing_balls</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_periodic.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_direct.c</code></p>
+
+<p>This example is a simple test of collision detection
+methods. To change the collision detection algorithm, you can replace
+the module collisions<em>direct.c to either collisions</em>tree.c or
+collisions_sweep.c in the Makefile.</p></li>
+<li><p><strong>examples/bouncing<em>balls</em>corners</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_periodic.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_tree.c</code></p>
+
+<p>This example tests collision detection methods accros box boundaries.
+There are four particles, one in each corner. To see the ghost boxes in OpenGL
+press <code>g</code> while the simulation is running.</p></li>
+<li><p><strong>examples/bouncing_string</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_none.c</code>
+<code>boundaries_periodic.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_direct.c</code></p>
+
+<p>This example tests collision detection methods.
+The example uses a non-square, rectangular box. 10 particles are placed
+along a line. All except one of the particles are at rest
+initially.</p></li>
+<li><p><strong>examples/circumplanetarydust</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example shows how to integrate circumplanetary
+dust particles using the <code>integrator_ias15.c</code> module.
+The example sets the function pointer <code>problem_additional_forces</code>
+to its own function that describes the radiation forces.
+The example uses a beta parameter of 0.01.
+The output is custom too, outputting the semi-major axis of
+every dust particle relative to the planet.
+Only one dust particle is used in this example, but there could be
+many.</p></li>
+<li><p><strong>examples/closeencounter</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example integrates a densly packed planetary system
+which becomes unstable on a timescale of only a few orbits. The IAS15
+integrator with adaptive timestepping is used. This integrator
+automatically decreases the timestep whenever a close
+enocunter happens. IAS15 is very high order and ideally suited for the
+detection of these kind of encounters.</p></li>
+<li><p><strong>examples/closeencounter_record</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_direct.c</code></p>
+
+<p>This example integrates a densly packed planetary system
+which becomes unstable on a timescale of only a few orbits.
+The example is identical to the <code>close_encounter</code> sample, except that
+the collisions are recorded and written to a file. What kind of collisions
+are recorded can be easily modified. It is also possible to implement some
+additional physics whenever a collision has been detection (e.g. fragmentation).
+The collision search is by default a direct search, i.e. O(N^2) but can be
+changed to a tree by using the <code>collisions_tree.c</code> module.</p></li>
+<li><p><strong>examples/dragforce</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_none.c</code>
+<code>boundaries_open.c</code>
+<code>collisions_none.c</code>
+<code>integrator_ias15.c</code></p>
+
+<p>This is a very simple example on how to implement a velocity
+dependent drag force. The example uses the IAS15 integrator, which
+is ideally suited to handle non-conservative forces.
+No gravitational forces or collisions are present.</p></li>
+<li><p><strong>examples/eccentric_orbit</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example uses the IAS15 integrator to simulate
+a very eccentric planetary orbit. The integrator
+automatically adjusts the timestep so that the pericentre passages
+resovled with high accuracy.</p></li>
+<li><p><strong>examples/forced_migration</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example applies dissipative forces to two
+bodies orbiting a central object. The forces are specified
+in terms of damping timescales for the semi-major axis and
+eccentricity. This mimics planetary micration in a protostellar disc.
+The example reproduces the study of Lee &amp; Peale (2002) on the
+formation of the planetary system GJ876. For a comparison,
+see figure 4 in their paper. The IAS15 integrator is used
+because the forces are velocity dependent.
+Special thanks goes to Willy Kley for helping me to implement
+the damping terms as actual forces.</p></li>
+<li><p><strong>examples/granulardynamics</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_none.c</code>
+<code>boundaries_periodic.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_tree.c</code></p>
+
+<p>This example is about granular dynamics. No gravitational
+forces are present in this example, which is why the module
+<code>gravity_none.c</code> is used. Two boundary layers made of
+particles simulate shearing walls. These walls are heating
+up the particles, create a dense and cool layer in the middle.</p></li>
+<li><p><strong>examples/J2</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example presents an implementation of the J2
+gravitational moment. The equation of motions are integrated with
+the 15th order IAS15 integrator. The parameters in this examples
+have been chosen to represent those of Saturn, but you can easily
+change them or even include higher order terms in the multipole
+expansion.</p></li>
+<li><p><strong>examples/kozai</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example uses the IAS15 integrator to simulate
+a Lidov Kozai cycle of a planet perturbed by a distant star. The integrator
+automatically adjusts the timestep so that even very high
+eccentricity encounters are resovled with high accuracy.</p></li>
+<li><p><strong>examples/opencl</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_opencl.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code></p>
+
+<p>A self-gravitating disc is integrated using
+the OpenCL direct gravity summation module.</p>
+
+<p>This is a very simple implementation (see <code>gravity_opencl.c</code>).
+Currently it only supports floating point precission. It also
+transfers the data back and forth from the GPU every timestep.
+There are considerable improvements to be made. This is just a
+proof of concept. Also note that the code required N to be a
+multiple of the workgrop size.</p>
+
+<p>You can test the performance increase by running:
+<code>make direct &amp;&amp; ./nbody</code>, which will run on the CPU and
+<code>make &amp;&amp; ./nbody</code>, which will run on the GPU.</p>
+
+<p>The Makefile is working with the Apple LLVM compiler. Changes
+might be necessary for other compilers such as gcc.</p></li>
+<li><p><strong>examples/outer<em>solar</em>system</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_wh.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example uses the symplectic Wisdom Holman integrator
+to integrate the outer planets of the solar system. The initial
+conditions are taken from Applegate et al 1986. Pluto is a test
+particle. This example is a good starting point for any long term orbit
+integrations.</p>
+
+<p>You probably want to turn off the visualization for any serious runs.
+Just go to the makefile and set <code>OPENGL=0</code>.</p>
+
+<p>You might also want to change the integrator in the Makefile to
+<code>integrator_ias15.c</code> which is an extremly high order accurate integrator
+that can handle close encounters really well.</p></li>
+<li><p><strong>examples/overstability</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_none.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_sweep.c</code></p>
+
+<p>A narrow box of Saturn's rings is simulated to
+study the viscous overstability. Collisions are resolved using
+the plane-sweep method.</p>
+
+<p>It takes about 30 orbits for the overstability to occur. You can
+speed up the calculation by turning off the visualization. Just press
+<code>d</code> while the simulation is running. Press <code>d</code> again to turn it back on.</p>
+
+<p>You can change the viewing angle of the camera with your mouse or by pressing
+the <code>r</code> key.</p></li>
+<li><p><strong>examples/prdrag</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_ias15.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example provides an implementation of the
+Poynting-Robertson effect. The code is using the IAS15 integrator
+which is ideally suited for this velocity dependent force.</p></li>
+<li><p><strong>examples/restarting_simulation</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_direct.c</code></p>
+
+<p>This example demonstrates how to restart a simulation
+using a binary file. A shearing sheet ring simulation is used, but
+the same method can be applied to any other type of simulation.</p>
+
+<p>First, run the program with <code>./nbody</code>.
+Random initial conditions are created and
+a restart file is written once per orbit.
+Then, to restart the simulation, run the
+program with <code>./nbody --restart restart.bin</code>.</p></li>
+<li><p><strong>examples/restricted_threebody</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_wh.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example simulates a disk of test particles around
+a central object, being perturbed by a planet.</p></li>
+<li><p><strong>examples/restricted<em>threebody</em>mpi</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This problem uses MPI to calculate the restricted three
+body problem. Active particles are copied to all nodes. All other
+particles only exist on one node and are not automatically (re-)
+distributed. There is not domain decomposition used in this example.
+Run with <code>mpirun -np 4 nbody</code>.</p></li>
+<li><p><strong>examples/selfgravity_disc</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_tree.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code></p>
+
+<p>A self-gravitating disc is integrated using
+the leap frog integrator. This example is also compatible with
+the Wisdom Holman integrator or the IAS15 integrator. Collisions
+are not resolved.</p></li>
+<li><p><strong>examples/selfgravity<em>disc</em>grape</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_grape.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code></p>
+
+<p>A self-gravitating disc is integrated using
+the leap frog integrator. This example is using the GRAPE
+module to calculate the self-gravity. You need to have a physical
+GRAPE card in your computer to run this example.
+Collisions are not resolved.</p></li>
+<li><p><strong>examples/selfgravity_plummer</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_tree.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_leapfrog.c</code>
+<code>collisions_none.c</code></p>
+
+<p>A self-gravitating plummer sphere is integrated using
+the leap frog integrator. Collisions are not resolved. Note that the
+fixed timestep might not allow you to resolve individual two-body
+encounters. An alternative integrator is <code>integrator_ias15.c</code> which
+comes with adaptive timestepping.</p></li>
+<li><p><strong>examples/shearing_sheet</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_tree.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_tree.c</code></p>
+
+<p>This example simulates a small patch of Saturn's
+Rings in shearing sheet coordinates. If you have OpenGL enabled,
+you'll see one copy of the computational domain. Press <code>g</code> to see
+the ghost boxes which are used to calculate gravity and collisions.
+Particle properties resemble those found in Saturn's rings.</p></li>
+<li><p><strong>examples/shearing<em>sheet</em>2</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_tree.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_tree.c</code></p>
+
+<p>This example is identical to the shearing_sheet
+example but uses a different algorithm for resolving individual
+collisions. In some cases, this might give more realistic results.
+Particle properties resemble those found in Saturn's rings.</p>
+
+<p>In this collision resolve method, particles are displaced if they
+overlap. This example also shows how to implement your own collision
+routine. This is where one could add fragmentation, or merging of
+particles.</p></li>
+<li><p><strong>examples/shearing<em>sheet</em>fft</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_fft.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_sweep.c</code></p>
+
+<p>This problem is identical to the other shearing
+sheet examples but uses an FFT based gravity solver.
+To run this example, you need to install the FFTW library.
+Collisions are detected using a plane sweep algorithm.
+There is no tree present in this simulation.</p></li>
+<li><p><strong>examples/shearing<em>sheet</em>grape</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_grape.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_sweep.c</code></p>
+
+<p>This is yet another shearing sheet example,
+it uses a GRAPE to calculate gravity. Note that you need to have
+a physical GRAPE card installed in your computer to run this
+simulation. Particle properties resemble those found in
+Saturn's rings.</p></li>
+<li><p><strong>examples/shearing<em>sheet</em>profiling</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_tree.c</code>
+<code>boundaries_shear.c</code>
+<code>integrator_sei.c</code>
+<code>collisions_tree.c</code></p>
+
+<p>This example demonstrates how to use the
+profiling tool that comes with REBOUND to find out which parts
+of your code are slow. To turn on this option, simple set
+<code>PROFILING=1</code> in the Makefile.</p></li>
+<li><p><strong>examples/spreading_ring</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_wh.c</code>
+<code>collisions_sweepphi.c</code></p>
+
+<p>A narrow ring of collisional particles is spreading.
+The example uses the Wisdom Holman integrator. A plane-sweep algorithm
+in the phi direction is used to detect collisions.</p></li>
+<li><p><strong>examples/symplectic_integrator</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_direct.c</code>
+<code>boundaries_open.c</code>
+<code>integrator_wh.c</code>
+<code>collisions_none.c</code></p>
+
+<p>This example uses the symplectic Wisdom Holman (WH) integrator
+to integrate test particles on eccentric orbits in a fixed potential.
+Note that the WH integrator assumes that the central object is at the origin.</p></li>
+<li><p><strong>examples/viewer</strong></p>
+
+<p>This example is using the following modules: <br>
+<code>gravity_none.c</code>
+<code>boundaries_periodic.c</code>
+<code>integrator_dummy.c</code>
+<code>collisions_dummy.c</code></p>
+
+<p>This example doesn't simulate anything. It's just a
+visualization toll that can display data in the form x, y, z, r.
+This might be useful when large simulations have been run and you want
+to look (at parts of) it at a later time.</p>
+
+<p>Note that this example uses only dummy modules.</p></li>
+</ul>
+
+<p>This viewer can display data in the form x, y, z, r.  </p>
+
+<h2>OpenGL keyboard command</h2>
+
+<p>You can use the following keyboard command to alter the OpenGL real-time visualizations.</p>
+
+<table>
+  <tr><th>Key</th>
+     <th>Description</th></tr>
+  <tr><td>(space)</td><td>Pause simulation.</td></tr>
+  <tr><td>d</td><td>Pause real-time visualization (simulation continues).</td></tr>
+  <tr><td>q</td><td>Quit simulation.</td></tr>
+  <tr><td>s</td><td>Toggle three dimensional spheres (looks better)/points (draws faster)</td></tr>
+  <tr><td>g</td><td>Toggle ghost boxes</td></tr>
+  <tr><td>r</td><td>Reset view. Press multiple times to change orientation.</td></tr>
+  <tr><td>x/X</td><td>Move to a coordinate system centered on a particle (note: does not work if particle array is constantly resorted, i.e. in a tree.)</td></tr>
+  <tr><td>t</td><td>Show tree structure.</td></tr>
+  <tr><td>m</td><td>Show center of mass in tree structure (only available when t is toggled on).</td></tr>
+  <tr><td>p</td><td>Save screen shot to file.</td></tr>
+  <tr><td>c</td><td>Toggle clear screen after each time-step.</td></tr>
+  <tr><td>w</td><td>Draw orbits as wires (particle with index 0 is central object).</td></tr>
+</table>
+
+<h2>Support and contributions</h2>
+
+<p>We offer limited support for REBOUND. If you encounter any problems, just send us an e-mail with as much details as possible and include your problem.c and makefile. Please make sure you are using the latest version of REBOUND that is available on github. </p>
+
+<p>REBOUND is open source and you are strongly encouraged to contribute to this project if you are using it. Please contact us and we will give you permission to push directly to the public repository. </p>
+
+<h2>License</h2>
+
+<p>REBOUND is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
+
+<p>REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+
+<h2>Acknowledgments</h2>
+
+<p>When you use this code or parts of this code for results presented in a scientific publication, please send us a copy of your paper so that we can keep track of all publications that made use of the code. We would greatly appreciate a citation to Rein and Liu (2012) and an acknowledgment of the form: </p>
+
+<p><em>Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound.</em></p>
+
+<p>Reference in BibTeX format:</p>
+
+<pre><code>@ARTICLE{ReinLiu2012,
+   author = {{Rein}, H. and {Liu}, S.-F.},
+    title = "{REBOUND: An open-source multi-purpose N-body code for collisional dynamics}",
+  journal = {A\&amp;A},
+archivePrefix = "arXiv",
+   eprint = {1110.4876},
+      DOI = "10.1051/0004-6361/201118085",
+      url = "http://dx.doi.org/10.1051/0004-6361/201118085",
+ primaryClass = "astro-ph.EP",
+ keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems, Physics - Computational Physics},
+     year = 2012,
+    month = "",
+   volume = 537,
+    pages = "A128",
+   adsurl = {http://adsabs.harvard.edu/abs/2011arXiv1110.4876R},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+</code></pre>
