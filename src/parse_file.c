@@ -33,15 +33,17 @@ void parse_cartesian_data(FILE *fi,int Npl, double masses[Npl], double ** pos, d
 }
 
 void parse_orbel2D_data(FILE *fi,int Npl,double Mcen){
-	double mass,a,e,omega,f;
+	double mass,a,e,omega,M;
 	
 	int i =0;
 	for(i=0; i<Npl;i++){
-		if ( fscanf(fi,"%lf %lf %lf %lf %lf",&mass,&a,&e,&omega,&f)!=5){
+		if ( fscanf(fi,"%lf %lf %lf %lf %lf",&mass,&a,&e,&omega,&M)!=5){
 			printf("Error in planet file, line %d\n",i+1);
 			exit(1);
 		}
-		particles_add( tools_init_orbit2d(Mcen,mass,a,e,omega,f) )
+		
+		double f = tools_MeanAnom2TrueAnom(M,e);
+		particles_add( tools_init_orbit2d(Mcen,mass,a,e,omega,f) );
 	}
 }
 
