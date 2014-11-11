@@ -157,6 +157,34 @@ void tools_init_plummer(int _N, double M, double R) {
 	}
 }
 
+// Convert MeanAnomaly to True Anomaly:
+//
+// 		MeanAnom = E - e * sin( E )
+//		tan( f/2 ) = sqrt( (1+e)/(1-e) ) * tan(E/2)
+//
+//		... Murray & Dermott, pg. 33 ...
+
+#define TINY 1.0e-12
+double tools_MeanAnom2TrueAnom(double M,double e){
+	double Eold,E;
+	double dE = 1.0;
+	double numer,denom;
+	
+	// Starting value for E (M&D, pg 36):
+	int s = (sin(M) > 0.) ? 1 : -1;
+	E = M + 0.85 * e * s;
+	
+	while (dE > TINY){
+		Eold = E;
+		numer = Eold - e * sin(Eold) - M;
+		denom = 1 - e * cos(Eold);
+		E = Eold - numer / denom;
+		dE = fabs(E-Eold);
+	}
+	
+	return 2*atan( sqrt( (1.+e)/(1.-e) )  * tan( 0.5 * E ) ); 
+		
+}
 struct particle tools_init_orbit2d(double M, double m, double a, double e, double omega, double f){
 	struct particle p;
 	p.m = m;
@@ -179,7 +207,7 @@ struct particle tools_init_orbit2d(double M, double m, double a, double e, doubl
 	return p;
 }
 
-#define TINY 1.0e-12
+
 struct orbit tools_p2orbit(struct particle p, struct particle star){
 	struct orbit o;
 	double h0,h1,h2,e0,e1,e2,n0,n1,n,er,vr,mu,ea;
