@@ -1,9 +1,14 @@
 REBOUND - An open-source multi-purpose N-body code for collisional dynamics
 ===========================================================================
 
+[![GPL](http://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/master/LICENSE)
+[![arXiv](http://img.shields.io/badge/arXiv-1110.4876-orange.svg?style=flat)](http://arxiv.org/abs/1110.4876)
+[![arXiv](http://img.shields.io/badge/arXiv-1409.4779-orange.svg?style=flat)](http://arxiv.org/abs/1409.4779)
+
+
 Contributors
 ------------
-* Hanno Rein, Institute for Advanced Study (IAS), Princeton, <hanno@hanno-rein.de>
+* Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University (KIAA-PKU), Beijing, <liushangfei@pku.edu.cn>
 * David S. Spiegel, Institute for Advanced Study (IAS), Princeton, <dave@ias.edu>
 * Akihiko Fujii, National Astronomical Observatory of Japan/University of Tokyo, Tokyo, <akihiko.fujii@nao.ac.jp>
@@ -15,7 +20,7 @@ There are two papers describing the functionality of REBOUND.
 
 The first one, Rein & Liu (Astronomy and Astrophysics, Volume 537, A128, 2012, http://arxiv.org/abs/1110.4876), describes the code structure and the main feature including the gravity and collision routines. 
 
-The second paper, Rein & Spiegel (in preparation) describes versatile high order integrator IAS15 which is now part of REBOUND. 
+The second paper, Rein & Spiegel (MNRAS, in press, http://arxiv.org/abs/1409.4779) describes the versatile high order integrator IAS15 which is now part of REBOUND. 
 
 
 Screenshot
@@ -24,6 +29,32 @@ Screenshot
 ![Tree structure in REBOUND](https://raw.github.com/hannorein/rebound/master/doc/images/screenshot_shearingsheet.png) 
 
 You can also find a video on YouTube, http://youtu.be/gaExPGW1WzI?hd=1, that shows how to download and install REBOUND. 
+
+
+Python and other programming languages 
+-----------------
+REBOUND is written in C. However, we provide a simple dynamic library `libias15` for the new IAS15 integrator. Most of the features that make REBOUND great are not available in this library. It is purely for efficiently accessing the high order integrator IAS15. There is no visualization and no helper function to setup particles. To compile this library, go to the `shared` folder and type `make`.
+
+The most interesting use case for `libias15` is a python wrapper that we provide. This wrapper can be used to very easily access `libias15`. The wrapper (module) might appeal to people who want to setup their problem in python and then call IAS15 to efficiently integrate particles with very high precision. The following listing shows a complete python script to run an N-body simulation with IAS15 and `libias15`:
+ 
+```python
+# Import the rebound module
+import sys; sys.path.append('../')
+import rebound
+
+# Add particles
+rebound.particle_add( rebound.Particle(m=1.) )                  # Star
+rebound.particle_add( rebound.Particle(m=1e-3,x=1.,vy=1.) )     # Planet
+
+# Move particles so that the center of mass is (and stays) at the origin  
+rebound.move_to_center_of_momentum()
+
+# Integrate until t=100 (roughly 16 orbits) 
+rebound.integrate(100.)
+```
+
+For details, please look at the README file in the `python_examples` directory. 
+
 
 Available modules
 -----------------
@@ -438,6 +469,21 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   
   
 
+*  **examples/mergers**
+
+  This example is using the following modules:  
+  `gravity_direct.c`
+  `boundaries_open.c`
+  `integrator_ias15.c`
+  `collisions_direct.c`
+
+  This example integrates a densly packed planetary system
+  which becomes unstable on a timescale of only a few orbits. The IAS15
+  integrator with adaptive timestepping is used. The bodies have a finite
+  size and merge if they collide. Note that the size is unphysically large
+  in this example.
+  
+
 *  **examples/opencl**
 
   This example is using the following modules:  
@@ -474,10 +520,10 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   This example is using the following modules:  
   `gravity_direct.c`
   `boundaries_open.c`
-  `integrator_wh.c`
+  `integrator_ias15.c`
   `collisions_none.c`
 
-  This example uses the symplectic Wisdom Holman integrator
+  This example uses the IAS15 integrator
   to integrate the outer planets of the solar system. The initial
   conditions are taken from Applegate et al 1986. Pluto is a test
   particle. This example is a good starting point for any long term orbit
@@ -486,9 +532,8 @@ Whatever you plan to do with REBOUND, chances are there is already an example av
   You probably want to turn off the visualization for any serious runs.
   Just go to the makefile and set `OPENGL=0`.
   
-  You might also want to change the integrator in the Makefile to
-  `integrator_ias15.c` which is an extremly high order accurate integrator
-  that can handle close encounters really well.
+  The example also works with the Wisdom-Holman symplectic integrator.
+  Simply change the integrator to `integrator_wh.c` in the Makefile.
   
 
 *  **examples/overstability**
@@ -779,23 +824,40 @@ When you use this code or parts of this code for results presented in a scientif
 
 _Simulations in this paper made use of the collisional N-body code REBOUND which can be downloaded freely at http://github.com/hannorein/rebound._
 
-Reference in BibTeX format:
+If you use the IAS15 integrator, please cite Rein and Spiegel (2014).
+
+References in BibTeX format:
 
     @ARTICLE{ReinLiu2012,
        author = {{Rein}, H. and {Liu}, S.-F.},
-        title = "{REBOUND: An open-source multi-purpose N-body code for collisional dynamics}",
-      journal = {A\&A},
+        title = "{REBOUND: an open-source multi-purpose N-body code for collisional dynamics}",
+      journal = {\aap},
     archivePrefix = "arXiv",
        eprint = {1110.4876},
-          DOI = "10.1051/0004-6361/201118085",
-          url = "http://dx.doi.org/10.1051/0004-6361/201118085",
      primaryClass = "astro-ph.EP",
-     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems, Physics - Computational Physics},
+     keywords = {methods: numerical, planets and satellites: rings, protoplanetary disks},
          year = 2012,
-        month = "",
+        month = jan,
        volume = 537,
-        pages = "A128",
-       adsurl = {http://adsabs.harvard.edu/abs/2011arXiv1110.4876R},
+          eid = {A128},
+        pages = {A128},
+          doi = {10.1051/0004-6361/201118085},
+       adsurl = {http://adsabs.harvard.edu/abs/2012A%26A...537A.128R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
     }
+
+    @ARTICLE{ReinSpiegel2014,
+       author = {{Rein}, H. and {Spiegel}, D.~S.},
+        title = "{IAS15: A fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
+      journal = {ArXiv e-prints},
+    archivePrefix = "arXiv",
+       eprint = {1409.4779},
+     primaryClass = "astro-ph.EP",
+     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics, Mathematics - Numerical Analysis},
+         year = 2014,
+        month = sep,
+       adsurl = {http://adsabs.harvard.edu/abs/2014arXiv1409.4779R},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+    }
+
 
