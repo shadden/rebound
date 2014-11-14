@@ -4,16 +4,44 @@
 #include "tools.h"
 #include "particle.h"
 
-void parse_param_data(FILE *fi,int* npl,double* dt,int* N_dt_out,int* N_dt_timing){
-	if(fscanf(fi,"%d",npl)!=1)
+int parse_param_data(FILE *fi,int* Npl,int* inputType,double* dt,double* tmax,int* N_dt_out,double* Mcen,double* boxsize)
+{
+	if(fscanf(fi,"%d",Npl)!=1){
 		printf("Improper value, line 1");
-	if(fscanf(fi,"%lf",dt)!=1)
+		return 0;
+	}
+
+	if(fscanf(fi,"%d",inputType)!=1){
 		printf("Improper value, line 2");
-	if(fscanf(fi,"%d",N_dt_out)!=1)
+		return 0;
+	}
+
+	if(fscanf(fi,"%lf",dt)!=1){
 		printf("Improper value, line 3");
-	if(fscanf(fi,"%d",N_dt_timing)!=1)
+		return 0;
+	}
+
+	if(fscanf(fi,"%lf",tmax)!=1){
 		printf("Improper value, line 4");
+		return 0;
+	}
 	
+	if(fscanf(fi,"%d",N_dt_out)!=1){
+		printf("Improper value, line 5");
+		return 0;
+	}
+		
+	if(fscanf(fi,"%lf",Mcen)!=1){
+		printf("Improper value, line 6");	
+		return 0;
+	}
+	
+	if(fscanf(fi,"%lf",boxsize)!=1){
+		printf("Improper value, line 7");	
+		return 0;
+	}
+	
+	return 1;
 }
 
 void parse_cartesian_data(FILE *fi,int Npl, double masses[Npl], double ** pos, double **vel){
