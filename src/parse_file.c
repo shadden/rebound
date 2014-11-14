@@ -4,6 +4,13 @@
 #include "tools.h"
 #include "particle.h"
 
+void add_star(double Mcen){
+	struct particle star;
+	star.m  = Mcen;
+	star.x  = 0; star.y  = 0; star.z  = 0; 
+	star.vx = 0; star.vy = 0; star.vz = 0;
+	particles_add(star); 
+}
 int parse_param_data(FILE *fi,int* Npl,int* inputType,double* dt,double* tmax,int* N_dt_out,double* Mcen,double* boxsize)
 {
 	if(fscanf(fi,"%d",Npl)!=1){
@@ -44,25 +51,28 @@ int parse_param_data(FILE *fi,int* Npl,int* inputType,double* dt,double* tmax,in
 	return 1;
 }
 
-void parse_cartesian_data(FILE *fi,int Npl, double masses[Npl], double ** pos, double **vel){
+void parse_cartesian_data(FILE *fi,int Npl, double Mcen){
 	double mass;
 	double x,y,z;
 	double vx,vy,vz;
 	int i =0;
+	add_star(Mcen);
 	for(i=0; i<Npl;i++){
 		if ( fscanf(fi,"%lf %lf %lf %lf %lf %lf %lf",&mass,&x,&y,&z,&vx,&vy,&vz)!=7){
 			printf("Error in planet file, line %d\n",i+1);
 			exit(1);
 		}
-		masses[i] = mass;
-		pos[i][0] = x;	pos[i][1] = y;	pos[i][2] = z;
-		vel[i][0] = vx;	vel[i][1] = vy;	vel[i][2] = vz;
+		struct particle planet;
+		planet.m = mass;
+		planet.x = x;	planet.y = y;	planet.z = z;
+		planet.vx =vx;	planet.vy=vy;	planet.vz = vz;
+		particles_add(planet);
 	}
 }
 
 void parse_orbel2D_data(FILE *fi,int Npl,double Mcen){
 	double mass,a,e,omega,M;
-	
+	add_star(Mcen);
 	int i =0;
 	for(i=0; i<Npl;i++){
 		if ( fscanf(fi,"%lf %lf %lf %lf %lf",&mass,&a,&e,&omega,&M)!=5){

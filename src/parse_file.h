@@ -9,7 +9,7 @@
 *	6:	CENTRAL STAR MASS
 *	7:	BOX SIZE
 **/
-void parse_param_data(FILE *fi,int* npl,int *inputType, double* dt,double* tFinal, int* N_dt_timing, double* Mcen, double* boxSize);
+int parse_param_data(FILE *fi,int* npl,int *inputType, double* dt,double* tFinal, int* N_dt_timing, double* Mcen, double* boxSize);
 
 
 /**

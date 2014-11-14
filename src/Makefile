@@ -88,6 +88,7 @@ all:
 	$(CC) $(OPT) $(PREDEF) zpr.c -c
 	$(CC) $(OPT) $(PREDEF) display.c -c
 	$(CC) $(OPT) $(PREDEF) tools.c -c
+	$(CC) $(OPT) $(PREDEF) parse_file.c -c
 	$(CC) *.o -o nbody $(LIB)
 
 clean:
