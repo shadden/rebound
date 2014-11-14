@@ -6,6 +6,10 @@ export OPENGL=0
 #export OPENMP=1
 #export LIBPNG=1
 
+# Note to myself:
+#  - The L.H.S. of the ln commands set the *specific* code file to use
+#  - The R.H.S. is a sort *variable* name that allows different modules to be 
+#	used  
 all:
 	# Setup link to different modules
 	ln -fs gravity_direct.c ../../src/gravity.c
