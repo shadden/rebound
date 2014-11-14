@@ -102,4 +102,8 @@ void tools_move_to_center_of_momentum();
  */
 struct particle tools_get_center_of_mass(struct particle p1, struct particle p2);
 
+/**
+* Returns the true anomaly of an orbit with mean anomaly M and eccentricity e.
+*/
+double tools_MeanAnom2TrueAnom(double M,double e);
 #endif 	// TOOLS_H
